@@ -37,7 +37,7 @@ rv_0 = orb.coe2rv(coe_0)
 
 class TestRV(unittest.TestCase):
 
-    def test_hamiltonian_constant_trajectory(self):
+    def test_hamiltonian_constant_solution(self):
         X0 = rv_0
 
         X = np.tile(X0, (m, 1))
@@ -48,7 +48,7 @@ class TestRV(unittest.TestCase):
 
         self.assertTrue(all(H < tol))
 
-    def test_hamiltonian_keplerian_trajectory(self):
+    def test_hamiltonian_keplerian_solution(self):
         X0 = rv_0
 
         T = np.linspace(0, 10, num=m).reshape((m, 1))
@@ -59,7 +59,7 @@ class TestRV(unittest.TestCase):
 
         self.assertTrue(all(H < tol))
 
-    def test_hamiltonian_integrated_trajectory(self):
+    def test_hamiltonian_dynamics_solution(self):
         X0 = rv_0
         kep_dyn = rv.KeplerianDynamics(X0)
 
@@ -80,7 +80,7 @@ class TestRV(unittest.TestCase):
 
         self.assertTrue(all(H < tol))
 
-    def test_zonal_perturbed_trajectory(self):
+    def test_zonal_perturbed_solution(self):
         X0 = rv_0
         order_H = 6
         kep_dyn = rv.KeplerianDynamics(X0)
@@ -106,7 +106,7 @@ class TestRV(unittest.TestCase):
 
 class TestCOE(unittest.TestCase):
 
-    def test_hamiltonian_constant_trajectory(self):
+    def test_hamiltonian_constant_solution(self):
         X0 = coe_0
 
         X = np.tile(X0, (m, 1))
@@ -117,7 +117,7 @@ class TestCOE(unittest.TestCase):
 
         self.assertTrue(all(H_rel < tol))
 
-    def test_hamiltonian_keplerian_trajectory(self):
+    def test_hamiltonian_keplerian_solution(self):
         X0 = coe_0
 
         T = np.linspace(0, 10, num=m).reshape((m, 1))
@@ -127,3 +127,15 @@ class TestCOE(unittest.TestCase):
         H = coe.Hamiltonian(order=order)(T, X)
 
         self.assertTrue(all(H < tol))
+
+    def test_compare_keplerian_to_rv(self):
+        X0_coe = coe_0
+        X0_rv = rv_0
+
+        T = np.linspace(0, 10, num=m).reshape((m, 1))
+        X_coe = coe.KeplerianSolution(X0_coe)(T)
+        X_rv = rv.KeplerianSolution(X0_rv)(T)
+
+        X_diff_norm = np.linalg.norm(orb.coe2rv(X_coe) - X_rv, ord=2, axis=1)
+
+        self.assertTrue(all(X_diff_norm < tol))
