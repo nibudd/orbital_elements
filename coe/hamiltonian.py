@@ -1,5 +1,3 @@
-"""Hamiltonian for claissical orbital elements."""
-
 from orbital_elements.rv.hamiltonian import Hamiltonian as rvHam
 import orbital_mechanics.orbit as orb
 
@@ -13,16 +11,19 @@ __date__ = "02 Mar 2017"
 
 
 class Hamiltonian(object):
-    """Calculate Hamiltonian change using zonal gravity in classical elements.
+    """Hamiltonian for claissical orbital elements.
 
     Attributes:
-        mu: float
-            Standard Gravitational Parameter
-        order: int
+        mu: float, optional
+            Standard Gravitational Parameter. Defaults to 1.0, the standard
+            value in canonical units.
+        order: int, optional
             Zonal gravity order. Order of 1 corresponds to two body dynamics.
-            Higher orders include preturbations from J2 up to J6.
-        r_earth: float
-            Equatorial radius of Earth.
+            Higher orders include preturbations from J2 up to J6. Defaults to
+            2, corresponding to the commonly used J2 perturbations.
+        r_earth: float, optional
+            Equatorial radius of Earth. Defaults to 1.0, Earth's radius in
+            canonical units.
     """
 
     def __init__(self, mu=1.0, order=1, r_earth=1.0):

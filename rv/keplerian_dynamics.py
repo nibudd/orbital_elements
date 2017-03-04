@@ -9,8 +9,8 @@ __status__ = "Production"
 __date__ = "03 Mar 2017"
 
 
-class GVE(object):
-    """Gauss's Variational Equations equivalent for position-velocity elements.
+class KeplerianDynamics(object):
+    """Keplerian dynamics for position-velocity elements.
 
     Attributes:
         mu: float, optional
@@ -18,11 +18,12 @@ class GVE(object):
             value in canonical units.
     """
 
-    def __init__(self, mu=1.0):
+    def __init__(self, X0, mu=1.0):
+        self.X0 = X0
         self.mu = mu
 
     def __call__(self, T, X):
-        """Calculate GVE matrices in position-velocity elements.
+        """Calculate position-velocity solution.
 
         Args:
             T: ndarray
@@ -38,21 +39,14 @@ class GVE(object):
                 vz = velocity z-component
 
         Returns:
-            G: ndarray
-                (m, 6, 3) array of GVE matrices.
+            Xdot: ndarray
+                (m, 6) array of state derivatives.
         """
-        m = T.shape[0]
+        R = X[:, 0:3]
+        V = X[:, 3:6]
+        r = np.linalg.norm(R, axis=1, keepdims=True)
 
-        r = X[:, 0:3]
-        v = X[:, 3:6]
-        h = np.cross(r, v)
+        neg_mu_by_r3 = (-self.mu / r**3)
+        Vdot = np.tile(neg_mu_by_r3, (1, 3)) * R
 
-        i_r = r / np.linalg.norm(r)
-        i_h = h / np.linalg.norm(h)
-        i_t = np.cross(i_h, i_r).reshape((m, 3, 1))
-        i_r = i_r.reshape((m, 3, 1))
-        i_h = i_h.reshape((m, 3, 1))
-
-        G_bottom = np.concatenate((i_r, i_t, i_h), axis=2)
-
-        return np.concatenate((np.zeros((m, 3, 3)), G_bottom), axis=1)
+        return np.concatenate((V, Vdot), axis=1)

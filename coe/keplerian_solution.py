@@ -1,5 +1,3 @@
-"""Keplerian trajectory for classical orbital elements."""
-
 import numpy as np
 
 
@@ -12,8 +10,8 @@ __status__ = "Production"
 __date__ = "02 Mar 2017"
 
 
-class KeplerianPath(object):
-    """Calculate Keplerian trajectory in classical orbital elements.
+class KeplerianSolution(object):
+    """Keplerian solution for classical orbital elements.
 
     Attributes:
         X0: ndarray
@@ -24,8 +22,9 @@ class KeplerianPath(object):
             W = right ascension of the ascending node
             w = argument of perigee
             f = true anomaly
-        mu: float
-            Standard Gravitational Parameter
+        mu: float, optional
+            Standard Gravitational Parameter. Defaults to 1.0, the standard
+            value in canonical units.
     """
 
     def __init__(self, X0, mu=1.0):
@@ -33,7 +32,7 @@ class KeplerianPath(object):
         self.mu = mu
 
     def __call__(self, T):
-        """Calculate classical orbital elements based on the initial state.
+        """Calculate classical orbital elements solution.
 
         Args:
             T: ndarray
