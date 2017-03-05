@@ -22,7 +22,7 @@ class GVE(object):
         self.mu = mu
 
     def __call__(self, T, X):
-        """Calculate GVE matrices in position-velocity elements.
+        """Calculate GVE matrices for position-velocity elements.
 
         Args:
             T: ndarray
@@ -42,6 +42,7 @@ class GVE(object):
                 (m, 6, 3) array of GVE matrices.
         """
         m = T.shape[0]
+        dims = (m, 3, 1)
 
         r = X[:, 0:3]
         v = X[:, 3:6]
@@ -49,10 +50,11 @@ class GVE(object):
 
         i_r = r / np.linalg.norm(r)
         i_h = h / np.linalg.norm(h)
-        i_t = np.cross(i_h, i_r).reshape((m, 3, 1))
-        i_r = i_r.reshape((m, 3, 1))
-        i_h = i_h.reshape((m, 3, 1))
+        i_t = np.cross(i_h, i_r).reshape(dims)
+        i_r = i_r.reshape(dims)
+        i_h = i_h.reshape(dims)
 
+        # G's bottom rotates acceleration vectors from LVLH to ECI frame
         G_bottom = np.concatenate((i_r, i_t, i_h), axis=2)
 
         return np.concatenate((np.zeros((m, 3, 3)), G_bottom), axis=1)
