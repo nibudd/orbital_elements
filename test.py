@@ -4,7 +4,8 @@ import numpy as np
 import mcpyi
 import orbital_mechanics.orbit as orb
 import orbital_mechanics.dynamics as orbdyn
-from orbital_elements.pose.euler_angles import euler_angles
+import orbital_elements.pose as pose
+import orbital_elements.convert as convert
 import orbital_elements.rv as rv
 import orbital_elements.coe as coe
 
@@ -22,17 +23,21 @@ TU = 1/806.811  # TU/s
 m = 1000
 tol = 1e-14
 
+# INITIAL CONDITIONS
 mu = 1.0
 a_0 = 8000. * DU
 e_0 = 0.1
 i_0 = 10.*np.pi/180.
 W_0 = 0.*np.pi/180.
 w_0 = 0.*np.pi/180.
-M0_0 = 0.*np.pi/180.
+f_0 = 0.*np.pi/180.
 period = 2.*np.pi*(a_0**3 / mu)**.5
 
-coe_0 = np.array([[a_0, e_0, i_0, W_0, w_0, M0_0]])
+coe_0 = np.array([[a_0, e_0, i_0, W_0, w_0, f_0]])
 rv_0 = orb.coe2rv(coe_0)
+
+T = np.linspace(0, 10, num=m).reshape((m, 1))
+coe_f = coe.KeplerianSolution(coe_0)(T)
 
 
 class TestRV(unittest.TestCase):
@@ -51,7 +56,6 @@ class TestRV(unittest.TestCase):
     def test_hamiltonian_keplerian_solution(self):
         X0 = rv_0
 
-        T = np.linspace(0, 10, num=m).reshape((m, 1))
         X = rv.KeplerianSolution(X0)(T)
 
         order = 1
@@ -72,7 +76,6 @@ class TestRV(unittest.TestCase):
         N = (order_mcpi,) * seg_number
         mcpi = mcpyi.MCPI(kep_dyn, domains, N, 'warm', X0, tol)
 
-        T = np.linspace(0, 10, num=m).reshape((m, 1))
         X = mcpi.solve_serial()(T)
 
         order_H = 1
@@ -96,7 +99,6 @@ class TestRV(unittest.TestCase):
         N = (order_mcpi,) * seg_number
         mcpi = mcpyi.MCPI(system, domains, N, 'warm', X0, tol)
 
-        T = np.linspace(0, 10, num=m).reshape((m, 1))
         X = mcpi.solve_serial()(T)
 
         H = rv.Hamiltonian(order=order_H)(T, X)
@@ -120,7 +122,7 @@ class TestRV(unittest.TestCase):
         mcpi_forward = mcpyi.MCPI(sysfor, domains_for, N, 'warm', X0_forward,
                                   tol)
 
-        T_for = np.linspace(0, 10, num=m).reshape((m, 1))
+        T_for = T
         X_for = mcpi_forward.solve_serial()(T_for)
 
         X0_bckward = X_for[-1:]
@@ -151,7 +153,6 @@ class TestCOE(unittest.TestCase):
     def test_hamiltonian_keplerian_solution(self):
         X0 = coe_0
 
-        T = np.linspace(0, 10, num=m).reshape((m, 1))
         X = coe.KeplerianSolution(X0)(T)
 
         order = 1
@@ -163,7 +164,6 @@ class TestCOE(unittest.TestCase):
         X0_coe = coe_0
         X0_rv = rv_0
 
-        T = np.linspace(0, 10, num=m).reshape((m, 1))
         X_coe = coe.KeplerianSolution(X0_coe)(T)
         X_rv = rv.KeplerianSolution(X0_rv)(T)
 
@@ -182,7 +182,6 @@ class TestCOE(unittest.TestCase):
         N = (order_mcpi,) * seg_number
         mcpi = mcpyi.MCPI(kep_dyn, domains, N, 'warm', X0, tol)
 
-        T = np.linspace(0, 10, num=m).reshape((m, 1))
         X = mcpi.solve_serial()(T)
 
         order_H = 1
@@ -206,7 +205,6 @@ class TestCOE(unittest.TestCase):
         mcpi_coe = mcpyi.MCPI(coe_dyn, domains, N, 'warm', X0_coe, tol)
         mcpi_rv = mcpyi.MCPI(rv_dyn, domains, N, 'warm', X0_rv, tol)
 
-        T = np.linspace(0, 10, num=m).reshape((m, 1))
         X_coe = mcpi_coe.solve_serial()(T)
         X_rv = mcpi_rv.solve_serial()(T)
 
@@ -228,7 +226,6 @@ class TestCOE(unittest.TestCase):
         N = (order_mcpi,) * seg_number
         mcpi = mcpyi.MCPI(system, domains, N, 'warm', X0, tol)
 
-        T = np.linspace(0, 10, num=m).reshape((m, 1))
         X = mcpi.solve_serial()(T)
 
         H = coe.Hamiltonian(order=order_H)(T, X)
@@ -256,7 +253,6 @@ class TestCOE(unittest.TestCase):
         mcpi_coe = mcpyi.MCPI(syscoe, domains, N, 'warm', X0_coe, tol)
         mcpi_rv = mcpyi.MCPI(sysrv, domains, N, 'warm', X0_rv, tol)
 
-        T = np.linspace(0, 10, num=m).reshape((m, 1))
         X_coe = mcpi_coe.solve_serial()(T)
         X_rv = mcpi_rv.solve_serial()(T)
 
@@ -268,13 +264,59 @@ class TestPose(unittest.TestCase):
     def test_single_dcm(self):
         axes = [1]
         angles = np.array([[1]])
-        dcm = euler_angles(axes, angles)
+        dcm = pose.euler_angles(axes, angles)
 
         self.assertEqual(dcm.shape, (1, 3, 3))
 
     def test_313_rotation(self):
         axes = [3, 1, 3]
         angles = np.array([[1, 1.5, 2]])
-        dcm = euler_angles(axes, angles)
+        dcm = pose.euler_angles(axes, angles)
 
         self.assertEqual(dcm.shape, (1, 3, 3))
+
+
+class TestConvert(unittest.TestCase):
+
+    def test_coef_coeE_coef(self):
+        coef = convert.mod_angles(coe_f)
+        coeE = convert.coeE_coef(coef)
+        coef2 = convert.mod_angles(convert.coef_coeE(coeE))
+
+        np.testing.assert_allclose(coef, coef2, rtol=tol)
+
+    def test_coeE_coef_coeE(self):
+        coeE = convert.mod_angles(convert.coeE_coef(coe_f))
+        coef = convert.coef_coeE(coeE)
+        coeE2 = convert.mod_angles(convert.coeE_coef(coef))
+
+        np.testing.assert_allclose(coeE, coeE2, rtol=tol)
+
+    def test_coeE_coeM_coeE(self):
+        coeE = convert.mod_angles(convert.coeE_coef(coe_f))
+        coeM = convert.coeM_coeE(coeE)
+        coeE2 = convert.mod_angles(convert.coeE_coeM(coeM))
+
+        np.testing.assert_allclose(coeE, coeE2, rtol=tol)
+
+    def test_coeM_coeE_coeM(self):
+        coeE = convert.coeE_coef(coe_f)
+        coeM = convert.mod_angles(convert.coeM_coeE(coeE))
+        coeE = convert.coeE_coeM(coeM)
+        coeM2 = convert.mod_angles(convert.coeM_coeE(coeE))
+
+        np.testing.assert_allclose(coeM, coeM2, rtol=tol)
+
+    def test_coef_coeM_coef(self):
+        coef = convert.mod_angles(coe_f)
+        coeM = convert.coeM_coef(coef)
+        coef2 = convert.mod_angles(convert.coef_coeM(coeM))
+
+        np.testing.assert_allclose(coef, coef2, rtol=tol)
+
+    def test_coeM_coef_coeM(self):
+        coeM = convert.mod_angles(convert.coeM_coef(coe_f))
+        coef = convert.coef_coeM(coeM)
+        coeM2 = convert.mod_angles(convert.coeM_coef(coef))
+
+        np.testing.assert_allclose(coeM, coeM2, rtol=tol)
