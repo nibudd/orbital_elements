@@ -15,7 +15,7 @@ def mod_angles(X, angle_indices=[5]):
     Args:
         X: ndarray
             (m, n) array of n states, some of which are angles
-        angle_indices: list
+        angle_indices: list, optional
             Integer list of indices of columns to be modded by 2pi.
 
     Returns:

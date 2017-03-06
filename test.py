@@ -320,3 +320,32 @@ class TestConvert(unittest.TestCase):
         coeM2 = convert.mod_angles(convert.coeM_coef(coef))
 
         np.testing.assert_allclose(coeM, coeM2, rtol=tol)
+
+    def test_coe_mee_coe(self):
+        coe = convert.mod_angles(coe_f)
+        mee = convert.mee_coe(coe)
+        coe2 = convert.mod_angles(convert.coe_mee(mee))
+
+        np.testing.assert_allclose(coe, coe2, rtol=tol)
+
+    def test_mee_coe_mee(self):
+        mee = convert.mod_angles(convert.mee_coe(coe_f))
+        coe = convert.coe_mee(mee)
+        mee2 = convert.mod_angles(convert.mee_coe(coe))
+
+        np.testing.assert_allclose(mee, mee2, rtol=tol)
+
+    def test_mee_rv_mee(self):
+        mee = convert.mod_angles(convert.mee_coe(coe_f))
+        rv = convert.rv_mee(mee)
+        mee2 = convert.mod_angles(convert.mee_rv(rv))
+
+        np.testing.assert_allclose(mee, mee2, rtol=0, atol=tol)
+
+    def test_rv_mee_rv(self):
+        mee = convert.mod_angles(convert.mee_coe(coe_f))
+        rv = convert.rv_mee(mee)
+        mee = convert.mee_rv(rv)
+        rv2 = convert.rv_mee(mee)
+
+        np.testing.assert_allclose(rv, rv2, rtol=0, atol=tol)
