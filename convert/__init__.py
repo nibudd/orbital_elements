@@ -9,3 +9,5 @@ from orbital_elements.convert.mee_coe import mee_coe
 from orbital_elements.convert.coe_mee import coe_mee
 from orbital_elements.convert.mee_rv import mee_rv
 from orbital_elements.convert.rv_mee import rv_mee
+from orbital_elements.convert.coe_rv import coe_rv
+from orbital_elements.convert.rv_coe import rv_coe

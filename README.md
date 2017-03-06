@@ -1,2 +1,2 @@
 # orbital_elements
-A collection of classes for computing dynamics and trajectories in different orbital element representations.
+A collection of classes for computing dynamics and solutions in different orbital element sets, along with functions for converting between different element sets.
