@@ -1,4 +1,4 @@
-import orbital_mechanics.orbit as orb
+import orbital_elements.convert as convert
 from orbital_elements.coe.gve import GVE
 from orbital_elements.rv.zonal_gravity import ZonalGravity as rvZonalGravity
 
@@ -54,7 +54,7 @@ class ZonalGravity(object):
         """
         rvzg = rvZonalGravity(mu=self.mu, order=self.order,
                               r_earth=self.r_earth)
-        a_d = rvzg.lvlh_acceleration(T, orb.coe2rv(X))
+        a_d = rvzg.lvlh_acceleration(T, convert.rv_coe(X))
         G = GVE()(T, X)
         m = T.shape[0]
 

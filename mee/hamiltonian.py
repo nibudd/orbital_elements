@@ -7,11 +7,11 @@ __copyright__ = "Copyright 2017, LASR Lab"
 __license__ = "MIT"
 __version__ = "0.1"
 __status__ = "Production"
-__date__ = "02 Mar 2017"
+__date__ = "06 Mar 2017"
 
 
 class Hamiltonian(object):
-    """Hamiltonian for claissical orbital elements.
+    """Hamiltonian for modified equinoctial elements.
 
     Attributes:
         mu: float, optional
@@ -38,14 +38,14 @@ class Hamiltonian(object):
             T: ndarray
                 (m, 1) array of times.
             X: ndarray
-                (m, 6) array of states.
-                Columns are ordered as (a, e, i, W, w, f), where
-                a = semi-major axis
-                e = eccentricity
-                i = inclination
-                W = right ascension of the ascending node
-                w = argument of perigee
-                f = true anomaly
+                (m, 6) array of position-velocity elements ordered as
+                (p, f, g, h, k, L), where
+                p = semi-latus rectum
+                f = 1-component of eccentricity vector in perifocal frame
+                g = 2-component of eccentricity vector in perifocal frame
+                h = 1-component of the ascending node vector in equinoctial frame
+                k = 2-component of the ascending node vector in equinoctial frame
+                L = true longitude
 
         Returns:
             H_rel: ndarray
@@ -53,4 +53,4 @@ class Hamiltonian(object):
         """
         Hamiltonian = rvHam(mu=self.mu, order=self.order, r_earth=self.r_earth)
 
-        return Hamiltonian(T, convert.rv_coe(X))
+        return Hamiltonian(T, convert.rv_mee(X))

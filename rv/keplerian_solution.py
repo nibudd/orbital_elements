@@ -1,4 +1,4 @@
-import orbital_mechanics.orbit as orb
+import orbital_elements.convert as convert
 from orbital_elements.coe.keplerian_solution import KeplerianSolution as KepSol
 
 __author__ = "Nathan I. Budd"
@@ -43,5 +43,5 @@ class KeplerianSolution(object):
             X: ndarray
                 (m, 6) array of states.
         """
-        X_coe = KepSol(orb.rv2coe(self.X0), mu=self.mu)(T)
-        return orb.coe2rv(X_coe)
+        X_coe = KepSol(convert.coe_rv(self.X0), mu=self.mu)(T)
+        return convert.rv_coe(X_coe)

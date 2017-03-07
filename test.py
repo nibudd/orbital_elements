@@ -2,12 +2,12 @@
 import unittest
 import numpy as np
 import mcpyi
-import orbital_mechanics.orbit as orb
 import orbital_mechanics.dynamics as orbdyn
 import orbital_elements.pose as pose
 import orbital_elements.convert as convert
 import orbital_elements.rv as rv
 import orbital_elements.coe as coe
+import orbital_elements.mee as mee
 
 __author__ = "Nathan I. Budd"
 __email__ = "nibudd@gmail.com"
@@ -34,7 +34,8 @@ f_0 = 0.*np.pi/180.
 period = 2.*np.pi*(a_0**3 / mu)**.5
 
 coe_0 = np.array([[a_0, e_0, i_0, W_0, w_0, f_0]])
-rv_0 = orb.coe2rv(coe_0)
+rv_0 = convert.rv_coe(coe_0)
+mee_0 = convert.mee_coe(coe_0)
 
 T = np.linspace(0, 10, num=m).reshape((m, 1))
 coe_f = coe.KeplerianSolution(coe_0)(T)
@@ -42,7 +43,7 @@ coe_f = coe.KeplerianSolution(coe_0)(T)
 
 class TestRV(unittest.TestCase):
 
-    def test_hamiltonian_constant_solution(self):
+    def test_hamiltonian_constant(self):
         X0 = rv_0
 
         X = np.tile(X0, (m, 1))
@@ -53,7 +54,7 @@ class TestRV(unittest.TestCase):
 
         np.testing.assert_allclose(H[0, 0], H, rtol=tol)
 
-    def test_hamiltonian_keplerian_solution(self):
+    def test_hamiltonian_solution(self):
         X0 = rv_0
 
         X = rv.KeplerianSolution(X0)(T)
@@ -63,9 +64,29 @@ class TestRV(unittest.TestCase):
 
         np.testing.assert_allclose(H[0, 0], H, rtol=tol)
 
-    def test_hamiltonian_dynamics_solution(self):
+    def test_compare_dynamics_to_solution(self):
         X0 = rv_0
-        kep_dyn = rv.KeplerianDynamics(X0)
+
+        Xsol = rv.KeplerianSolution(X0)(T)
+
+        kep_dyn = rv.KeplerianDynamics()
+
+        orbits = 13
+        segs_per_orbit = 3
+        order_mcpi = 60
+        segments = orbits * segs_per_orbit
+        domains = [k*period/segs_per_orbit for k in range(segments+1)]
+        seg_number = len(domains) - 1
+        N = (order_mcpi,) * seg_number
+        mcpi = mcpyi.MCPI(kep_dyn, domains, N, 'warm', X0, tol)
+
+        Xdyn = mcpi.solve_serial()(T)
+
+        np.testing.assert_allclose(Xsol, Xdyn, rtol=0, atol=tol)
+
+    def test_hamiltonian_dynamics(self):
+        X0 = rv_0
+        kep_dyn = rv.KeplerianDynamics()
 
         orbits = 13
         segs_per_orbit = 3
@@ -83,10 +104,10 @@ class TestRV(unittest.TestCase):
 
         np.testing.assert_allclose(H[0, 0], H, rtol=tol)
 
-    def test_zonal_solution(self):
+    def test_zonal_gravity(self):
         X0 = rv_0
         order_H = 6
-        kep_dyn = rv.KeplerianDynamics(X0)
+        kep_dyn = rv.KeplerianDynamics()
         zon_grav = rv.ZonalGravity(order=order_H)
         system = orbdyn.SystemDynamics(kep_dyn, perturbations=zon_grav)
 
@@ -108,7 +129,7 @@ class TestRV(unittest.TestCase):
     def test_zonal_round_trip(self):
         X0_forward = rv_0
         order_H = 6
-        kep_dyn_forward = rv.KeplerianDynamics(X0_forward)
+        kep_dyn_forward = rv.KeplerianDynamics()
         zon_grav = rv.ZonalGravity(order=order_H)
         sysfor = orbdyn.SystemDynamics(kep_dyn_forward, perturbations=zon_grav)
 
@@ -126,7 +147,7 @@ class TestRV(unittest.TestCase):
         X_for = mcpi_forward.solve_serial()(T_for)
 
         X0_bckward = X_for[-1:]
-        kep_dyn_bckward = rv.KeplerianDynamics(X0_bckward)
+        kep_dyn_bckward = rv.KeplerianDynamics()
         sysbck = orbdyn.SystemDynamics(kep_dyn_bckward, perturbations=zon_grav)
         domains_bck = [-x for x in domains_for]
         mcpi_bckward = mcpyi.MCPI(sysbck, domains_bck, N, 'warm', X0_bckward,
@@ -139,7 +160,7 @@ class TestRV(unittest.TestCase):
 
 class TestCOE(unittest.TestCase):
 
-    def test_hamiltonian_constant_solution(self):
+    def test_hamiltonian_constant(self):
         X0 = coe_0
 
         X = np.tile(X0, (m, 1))
@@ -150,7 +171,7 @@ class TestCOE(unittest.TestCase):
 
         np.testing.assert_allclose(H[0, 0], H, rtol=tol)
 
-    def test_hamiltonian_keplerian_solution(self):
+    def test_hamiltonian_solution(self):
         X0 = coe_0
 
         X = coe.KeplerianSolution(X0)(T)
@@ -165,13 +186,46 @@ class TestCOE(unittest.TestCase):
         X0_rv = rv_0
 
         X_coe = coe.KeplerianSolution(X0_coe)(T)
-        X_rv = rv.KeplerianSolution(X0_rv)(T)
 
-        np.testing.assert_allclose(X_rv, orb.coe2rv(X_coe), rtol=0, atol=tol)
+        kep_dyn = rv.KeplerianDynamics()
 
-    def test_hamiltonian_dynamics_solution(self):
+        orbits = 13
+        segs_per_orbit = 3
+        order_mcpi = 60
+        segments = orbits * segs_per_orbit
+        domains = [k*period/segs_per_orbit for k in range(segments+1)]
+        seg_number = len(domains) - 1
+        N = (order_mcpi,) * seg_number
+        mcpi = mcpyi.MCPI(kep_dyn, domains, N, 'warm', X0_rv, tol)
+
+        X_rv = mcpi.solve_serial()(T)
+
+        np.testing.assert_allclose(X_rv, convert.rv_coe(X_coe), rtol=0,
+                                   atol=tol)
+
+    def test_compare_dynamics_to_solution(self):
+        X0 = rv_0
+
+        Xsol = rv.KeplerianSolution(X0)(T)
+
+        kep_dyn = rv.KeplerianDynamics()
+
+        orbits = 13
+        segs_per_orbit = 3
+        order_mcpi = 60
+        segments = orbits * segs_per_orbit
+        domains = [k*period/segs_per_orbit for k in range(segments+1)]
+        seg_number = len(domains) - 1
+        N = (order_mcpi,) * seg_number
+        mcpi = mcpyi.MCPI(kep_dyn, domains, N, 'warm', X0, tol)
+
+        Xdyn = mcpi.solve_serial()(T)
+
+        np.testing.assert_allclose(Xsol, Xdyn, rtol=0, atol=tol)
+
+    def test_hamiltonian_dynamics(self):
         X0 = coe_0
-        kep_dyn = coe.KeplerianDynamics(X0)
+        kep_dyn = coe.KeplerianDynamics()
 
         orbits = 13
         segs_per_orbit = 3
@@ -192,8 +246,8 @@ class TestCOE(unittest.TestCase):
     def test_compare_dynamics_to_rv(self):
         X0_coe = coe_0
         X0_rv = rv_0
-        coe_dyn = coe.KeplerianDynamics(X0_coe)
-        rv_dyn = rv.KeplerianDynamics(X0_rv)
+        coe_dyn = coe.KeplerianDynamics(_coe)
+        rv_dyn = rv.KeplerianDynamics(_rv)
 
         orbits = 13
         segs_per_orbit = 3
@@ -208,12 +262,13 @@ class TestCOE(unittest.TestCase):
         X_coe = mcpi_coe.solve_serial()(T)
         X_rv = mcpi_rv.solve_serial()(T)
 
-        np.testing.assert_allclose(X_rv, orb.coe2rv(X_coe), rtol=0, atol=1e-13)
+        np.testing.assert_allclose(X_rv, convert.rv_coe(X_coe), rtol=0,
+                                   atol=1e-13)
 
-    def test_zonal_solution(self):
+    def test_zonal_gravity(self):
         X0 = coe_0
         order_H = 2
-        kep_dyn = coe.KeplerianDynamics(X0)
+        kep_dyn = coe.KeplerianDynamics()
         zon_grav = coe.ZonalGravity(order=order_H)
         system = orbdyn.SystemDynamics(kep_dyn, perturbations=zon_grav)
 
@@ -256,7 +311,130 @@ class TestCOE(unittest.TestCase):
         X_coe = mcpi_coe.solve_serial()(T)
         X_rv = mcpi_rv.solve_serial()(T)
 
-        np.testing.assert_allclose(X_rv, orb.coe2rv(X_coe), rtol=0, atol=1e-13)
+        np.testing.assert_allclose(X_rv, convert.rv_coe(X_coe), rtol=0, atol=1e-13)
+
+
+class TestMEE(unittest.TestCase):
+
+    def test_hamiltonian_constant(self):
+        X0 = mee_0
+
+        X = np.tile(X0, (m, 1))
+        T = np.zeros((m, 1))
+
+        order = 6
+        H = mee.Hamiltonian(order=order)(T, X)
+
+        np.testing.assert_allclose(H[0, 0], H, rtol=tol)
+
+    def test_hamiltonian_solution(self):
+        X0 = mee_0
+
+        X = mee.KeplerianSolution(X0)(T)
+
+        order = 1
+        H = mee.Hamiltonian(order=order)(T, X)
+
+        np.testing.assert_allclose(H[0, 0], H, rtol=tol)
+    """
+    def test_compare_keplerian_to_rv(self):
+        X0_coe = coe_0
+        X0_rv = rv_0
+
+        X_coe = coe.KeplerianSolution(X0_coe)(T)
+        X_rv = rv.KeplerianSolution(X0_rv)(T)
+
+        np.testing.assert_allclose(X_rv, convert.rv_coe(X_coe), rtol=0, atol=tol)
+
+    def test_hamiltonian_dynamics(self):
+        X0 = coe_0
+        kep_dyn = coe.KeplerianDynamics()
+
+        orbits = 13
+        segs_per_orbit = 3
+        order_mcpi = 60
+        segments = orbits * segs_per_orbit
+        domains = [k*period/segs_per_orbit for k in range(segments+1)]
+        seg_number = len(domains) - 1
+        N = (order_mcpi,) * seg_number
+        mcpi = mcpyi.MCPI(kep_dyn, domains, N, 'warm', X0, tol)
+
+        X = mcpi.solve_serial()(T)
+
+        order_H = 1
+        H = coe.Hamiltonian(order=order_H)(T, X)
+
+        np.testing.assert_allclose(H[0, 0], H, rtol=tol)
+
+    def test_compare_dynamics_to_rv(self):
+        X0_coe = coe_0
+        X0_rv = rv_0
+        coe_dyn = coe.KeplerianDynamics(X0_coe)
+        rv_dyn = rv.KeplerianDynamics(X0_rv)
+
+        orbits = 13
+        segs_per_orbit = 3
+        order_mcpi = 60
+        segments = orbits * segs_per_orbit
+        domains = [k*period/segs_per_orbit for k in range(segments+1)]
+        seg_number = len(domains) - 1
+        N = (order_mcpi,) * seg_number
+        mcpi_coe = mcpyi.MCPI(coe_dyn, domains, N, 'warm', X0_coe, tol)
+        mcpi_rv = mcpyi.MCPI(rv_dyn, domains, N, 'warm', X0_rv, tol)
+
+        X_coe = mcpi_coe.solve_serial()(T)
+        X_rv = mcpi_rv.solve_serial()(T)
+
+        np.testing.assert_allclose(X_rv, convert.rv_coe(X_coe), rtol=0, atol=1e-13)
+
+    def test_zonal_gravity(self):
+        X0 = coe_0
+        order_H = 2
+        kep_dyn = coe.KeplerianDynamics()
+        zon_grav = coe.ZonalGravity(order=order_H)
+        system = orbdyn.SystemDynamics(kep_dyn, perturbations=zon_grav)
+
+        orbits = 13
+        segs_per_orbit = 3
+        order_mcpi = 60
+        segments = orbits * segs_per_orbit
+        domains = [k*period/segs_per_orbit for k in range(segments+1)]
+        seg_number = len(domains) - 1
+        N = (order_mcpi,) * seg_number
+        mcpi = mcpyi.MCPI(system, domains, N, 'warm', X0, tol)
+
+        X = mcpi.solve_serial()(T)
+
+        H = coe.Hamiltonian(order=order_H)(T, X)
+
+        np.testing.assert_allclose(H[0, 0], H, rtol=tol)
+
+    def test_compare_zonal_to_rv(self):
+        X0_coe = coe_0
+        X0_rv = rv_0
+        order_H = 2
+        kep_dyn_coe = coe.KeplerianDynamics(X0_coe)
+        zon_grav_coe = coe.ZonalGravity(order=order_H)
+        syscoe = orbdyn.SystemDynamics(kep_dyn_coe, perturbations=zon_grav_coe)
+        kep_dyn_rv = rv.KeplerianDynamics(X0_rv)
+        zon_grav_rv = rv.ZonalGravity(order=order_H)
+        sysrv = orbdyn.SystemDynamics(kep_dyn_rv, perturbations=zon_grav_rv)
+
+        orbits = 13
+        segs_per_orbit = 3
+        order_mcpi = 60
+        segments = orbits * segs_per_orbit
+        domains = [k*period/segs_per_orbit for k in range(segments+1)]
+        seg_number = len(domains) - 1
+        N = (order_mcpi,) * seg_number
+        mcpi_coe = mcpyi.MCPI(syscoe, domains, N, 'warm', X0_coe, tol)
+        mcpi_rv = mcpyi.MCPI(sysrv, domains, N, 'warm', X0_rv, tol)
+
+        X_coe = mcpi_coe.solve_serial()(T)
+        X_rv = mcpi_rv.solve_serial()(T)
+
+        np.testing.assert_allclose(X_rv, convert.rv_coe(X_coe), rtol=0, atol=1e-13)
+    """
 
 
 class TestPose(unittest.TestCase):

@@ -18,8 +18,7 @@ class KeplerianDynamics(object):
             value in canonical units.
     """
 
-    def __init__(self, X0, mu=1.0):
-        self.X0 = X0
+    def __init__(self, mu=1.0):
         self.mu = mu
 
     def __call__(self, T, X):

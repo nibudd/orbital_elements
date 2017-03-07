@@ -1,5 +1,4 @@
 import numpy as np
-import orbital_elements.convert as convert
 
 
 __author__ = "Nathan I. Budd"
@@ -8,21 +7,22 @@ __copyright__ = "Copyright 2017, LASR Lab"
 __license__ = "MIT"
 __version__ = "0.1"
 __status__ = "Production"
-__date__ = "02 Mar 2017"
+__date__ = "06 Mar 2017"
 
 
 class KeplerianSolution(object):
-    """Keplerian solution for classical orbital elements.
+    """Keplerian solution for modified equinoctial elements.
 
     Attributes:
         X0: ndarray
-            (1, 6) array of initial states ordered as (a, e, i, W, w, f), where
-            a = semi-major axis
-            e = eccentricity
-            i = inclination
-            W = right ascension of the ascending node
-            w = argument of perigee
-            f = true anomaly
+            (m, 6) array of position-velocity elements ordered as
+            (p, f, g, h, k, L), where
+            p = semi-latus rectum
+            f = 1-component of eccentricity vector in perifocal frame
+            g = 2-component of eccentricity vector in perifocal frame
+            h = 1-component of the ascending node vector in equinoctial frame
+            k = 2-component of the ascending node vector in equinoctial frame
+            L = true longitude
         mu: float, optional
             Standard Gravitational Parameter. Defaults to 1.0, the standard
             value in canonical units.
@@ -53,4 +53,4 @@ class KeplerianSolution(object):
         X = np.tile(self.X0, T.shape)
         X[0:, -1:] = X[0:, -1:] + dM
 
-        return convert.coef_coeM(X)
+        return X
