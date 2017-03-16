@@ -49,8 +49,9 @@ class KeplerianSolution(object):
 
         dT = T - T0
         dM = dT * n
+        M0 = convert.coeM_coef(self.X0)[0, 5]
+        M = M0 + dM
 
-        X = np.tile(self.X0, T.shape)
-        X[0:, -1:] = X[0:, -1:] + dM
+        coeM = np.concatenate((np.tile(self.X0[0:, 0:5], T.shape), M), axis=1)
 
-        return convert.coef_coeM(X)
+        return convert.coef_coeM(coeM)

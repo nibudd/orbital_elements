@@ -35,8 +35,8 @@ def coeM_coeE(coeE):
             M = mean anomaly
     """
     e = coeE[0:, 1:2]
-    E = coeE[0:, -1:]
+    E = coeE[0:, 5:6]
 
     M = np.mod(E - e*np.sin(E), 2*np.pi)
 
-    return np.concatenate((coeE[0:, 0:-1], M), axis=1)
+    return np.concatenate((coeE[0:, 0:5], M), axis=1)

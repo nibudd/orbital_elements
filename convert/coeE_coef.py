@@ -35,9 +35,9 @@ def coeE_coef(coef):
             E = eccentric anomaly
     """
     e = coef[0:, 1:2]
-    f = coef[0:, -1:]
+    f = coef[0:, 5:6]
 
     tan_E_by_2 = ((1.-e)/(1.+e))**.5 * np.tan(f/2)
     E = np.mod(2 * np.arctan(tan_E_by_2), 2*np.pi)
 
-    return np.concatenate((coef[0:, 0:-1], E), axis=1)
+    return np.concatenate((coef[0:, 0:5], E), axis=1)

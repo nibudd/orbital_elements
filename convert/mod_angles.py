@@ -25,5 +25,4 @@ def mod_angles(X, angle_indices=[5]):
     for k in angle_indices:
         X[:, k:k+1] = np.mod(X[:, k:k+1], 2*np.pi)
 
-
     return X

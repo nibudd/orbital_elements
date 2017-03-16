@@ -1,4 +1,5 @@
 import numpy as np
+import orbital_elements.convert as convert
 
 
 __author__ = "Nathan I. Budd"
@@ -7,7 +8,7 @@ __copyright__ = "Copyright 2017, LASR Lab"
 __license__ = "MIT"
 __version__ = "0.1"
 __status__ = "Production"
-__date__ = "06 Mar 2017"
+__date__ = "08 Mar 2017"
 
 
 class KeplerianSolution(object):
@@ -33,7 +34,7 @@ class KeplerianSolution(object):
         self.mu = mu
 
     def __call__(self, T):
-        """Calculate classical orbital elements solution.
+        """Calculate modified equinocital elements solution.
 
         Args:
             T: ndarray
@@ -44,13 +45,17 @@ class KeplerianSolution(object):
                 (m, 6) array of states.
         """
         T0 = T[0, 0]
-        a = self.X0[0, 0]
-        n = (self.mu / a**3)**.5
+        p = self.X0[0, 0]
+        f = self.X0[0, 1]
+        g = self.X0[0, 2]
+        n = (self.mu * ((1 - f**2 - g**2) / p)**3)**.5
 
         dT = T - T0
-        dM = dT * n
+        dMl = dT * n
+        Ml0 = convert.meeMl_meefl(self.X0)[0, 5]
+        Ml = Ml0 + dMl
 
-        X = np.tile(self.X0, T.shape)
-        X[0:, -1:] = X[0:, -1:] + dM
+        meeMl = np.concatenate(
+            (np.tile(self.X0[0:, 0:5], T.shape), Ml), axis=1)
 
-        return X
+        return convert.meefl_meeMl(meeMl)

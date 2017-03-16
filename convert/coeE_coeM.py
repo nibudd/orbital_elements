@@ -22,6 +22,8 @@ def coeE_coeM(coeM, tol=1e-14):
             W = right ascension of the ascending node
             w = argument of perigee
             M = mean anomaly
+        tol: float, optional
+            Tolerance for checking convergence of Newton's method.
 
     Returns:
         coeE: ndarray
@@ -35,7 +37,7 @@ def coeE_coeM(coeM, tol=1e-14):
             E = eccentric anomaly
     """
     e = coeM[0:, 1:2]
-    M = coeM[0:, -1:]
+    M = coeM[0:, 5:6]
     E0 = M + np.sign(np.sin(M))*e
     E1 = E0 + 1.
     max_iterations = 30
@@ -52,4 +54,4 @@ def coeE_coeM(coeM, tol=1e-14):
             break
 
     return np.concatenate(
-        (coeM[0:, 0:-1], np.mod(E1, 2*np.pi)), axis=1)
+        (coeM[0:, 0:5], np.mod(E1, 2*np.pi)), axis=1)

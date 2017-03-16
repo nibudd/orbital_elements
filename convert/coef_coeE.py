@@ -35,9 +35,9 @@ def coef_coeE(coeE):
             f = true anomaly
     """
     e = coeE[0:, 1:2]
-    E = coeE[0:, -1:]
+    E = coeE[0:, 5:6]
 
     tan_f_by_2 = ((1.+e)/(1.-e))**.5 * np.tan(E/2)
     f = np.mod(2 * np.arctan(tan_f_by_2), 2*np.pi)
 
-    return np.concatenate((coeE[0:, 0:-1], f), axis=1)
+    return np.concatenate((coeE[0:, 0:5], f), axis=1)
