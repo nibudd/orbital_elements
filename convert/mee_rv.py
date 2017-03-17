@@ -14,7 +14,7 @@ def mee_rv(rv, mu=1.):
 
     Args:
         rv: ndarray
-            (m, 6) array of COEs with true anomaly ordered as
+            (m, 6) array of position-velocity elements ordered as
             (rx, ry, rz, vx, vy, vz),
             where
             rx = position x-component
@@ -29,7 +29,7 @@ def mee_rv(rv, mu=1.):
 
     Returns:
         mee: ndarray
-            (m, 6) array of position-velocity elements ordered as
+            (m, 6) array of modified equinoctial elements ordered as
             (p, f, g, h, k, L), where
             p = semi-latus rectum
             f = 1-component of eccentricity vector in perifocal frame

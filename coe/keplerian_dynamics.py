@@ -22,7 +22,7 @@ class KeplerianDynamics(object):
         self.mu = mu
 
     def __call__(self, T, X):
-        """Calculate classical orbital elements solution.
+        """Calculate classical orbital elements dynamics.
 
         Args:
             T: ndarray

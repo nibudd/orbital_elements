@@ -14,7 +14,7 @@ def meeEl_meefl(meefl):
 
     Args:
         meefl: ndarray
-            (m, 6) array of position-velocity elements ordered as
+            (m, 6) array of modified equinoctial elements ordered as
             (p, f, g, h, k, fl), where
             p = semi-latus rectum
             f = 1-component of eccentricity vector in perifocal frame
@@ -25,7 +25,7 @@ def meeEl_meefl(meefl):
 
     Returns:
         meeEl: ndarray
-            (m, 6) array of position-velocity elements ordered as
+            (m, 6) array of modified equinoctial elements ordered as
             (p, f, g, h, k, El), where
             p = semi-latus rectum
             f = 1-component of eccentricity vector in perifocal frame

@@ -16,7 +16,7 @@ class KeplerianSolution(object):
 
     Attributes:
         X0: ndarray
-            (m, 6) array of position-velocity elements ordered as
+            (m, 6) array of modified equinoctial elements ordered as
             (p, f, g, h, k, L), where
             p = semi-latus rectum
             f = 1-component of eccentricity vector in perifocal frame

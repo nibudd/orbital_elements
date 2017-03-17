@@ -22,7 +22,7 @@ class KeplerianDynamics(object):
         self.mu = mu
 
     def __call__(self, T, X):
-        """Calculate position-velocity solution.
+        """Calculate position-velocity dynamics.
 
         Args:
             T: ndarray

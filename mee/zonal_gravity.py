@@ -1,5 +1,7 @@
-from orbital_elements.rv.hamiltonian import Hamiltonian as rvHam
 import orbital_elements.convert as convert
+from orbital_elements.mee.gve import GVE
+from orbital_elements.rv.zonal_gravity import ZonalGravity as rvZonalGravity
+
 
 __author__ = "Nathan I. Budd"
 __email__ = "nibudd@gmail.com"
@@ -7,11 +9,11 @@ __copyright__ = "Copyright 2017, LASR Lab"
 __license__ = "MIT"
 __version__ = "0.1"
 __status__ = "Production"
-__date__ = "06 Mar 2017"
+__date__ = "16 Mar 2017"
 
 
-class Hamiltonian(object):
-    """Hamiltonian for modified equinoctial elements.
+class ZonalGravity(object):
+    """Zonal gravity dynamics for modified equinoctial elements.
 
     Attributes:
         mu: float, optional
@@ -26,13 +28,13 @@ class Hamiltonian(object):
             canonical units.
     """
 
-    def __init__(self, mu=1.0, order=1, r_earth=1.0):
+    def __init__(self, mu=1.0, order=2, r_earth=1.0):
         self.mu = mu
         self.order = order
         self.r_earth = r_earth
 
     def __call__(self, T, X):
-        """Calculate Hamiltonian.
+        """Calculate zonal gravity perturations in MEEs.
 
         Args:
             T: ndarray
@@ -43,14 +45,18 @@ class Hamiltonian(object):
                 p = semi-latus rectum
                 f = 1-component of eccentricity vector in perifocal frame
                 g = 2-component of eccentricity vector in perifocal frame
-                h = 1-component of the ascending node vector in equinoctial frame
-                k = 2-component of the ascending node vector in equinoctial frame
+                h = 1-component of ascending node vector in equinoctial frame
+                k = 2-component of ascending node vector in equinoctial frame
                 L = true longitude
 
         Returns:
-            H_rel: ndarray
-                (m, 1) array of Hamiltonian over time.
+            Xdot: ndarray
+                (m, 6) array of state derivatives.
         """
-        Hamiltonian = rvHam(mu=self.mu, order=self.order, r_earth=self.r_earth)
+        rvzg = rvZonalGravity(mu=self.mu, order=self.order,
+                              r_earth=self.r_earth)
+        a_d = rvzg.lvlh_acceleration(T, convert.rv_mee(X))
+        G = GVE()(T, X)
+        m = T.shape[0]
 
-        return Hamiltonian(T, convert.rv_mee(X))
+        return (G @ a_d.reshape((m, 3, 1))).reshape((m, 6))
