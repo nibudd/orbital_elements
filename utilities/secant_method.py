@@ -13,39 +13,54 @@ def secant_method(f, x0, x1, tol=1e-14, Nmax=50):
     """Uses approximation of Newton's method to estimate root of f.
 
     Args:
-        f : callable
-            Takes an array with shape x0.shape as input.
-        x0 : ndarray
+        f: callable
+            Takes a float as input and returns a float.
+        x0: ndarray
             First guess for f(x) = 0.
-        X1 : ndarray
+        x1: ndarray
             Second guess for f(x) = 0.
-        tol : float
+        tol: float
             Error allowed between successive values of f(x).
-        Nmax : int
+        Nmax: int
             Total number of allowed iterations.
 
     Returns:
-        x : ndarray
-            Approximate root of f
+        X: ndarray
+            (m, 1) array of all the root guesses found.
+        e: ndarray
+            (m, 1) array of errors for each root guess found
+
+
     """
 
     above_tol = True
     below_Nmax = True
-    N = 0
+    X = []
+    e = []
 
     while above_tol and below_Nmax:
+        print('Starting iteration {}'.format(len(X)))
         f0 = f(x0)
         f1 = f(x1)
 
-        x2 = x1 - f1 * (x1 - x0) / (f1 - f0)
+        X += [x1]
+        e += [np.abs(f1 - f0)]
 
-        x0 = x1
-        x1 = x2
+        if e[-1] != 0:
+            x2 = x1 - f1 * (x1 - x0) / (f1 - f0)
+        else:
+            x2 = x1
 
-        N += 1
-        above_tol = True if np.linalg.norm(f0-f1) > tol else False
-        below_Nmax = True if N < Nmax else False
+        (x0, x1) = (x1, x2)
+
+        above_tol = True if e[-1] > tol else False
+        below_Nmax = True if len(X) < Nmax else False
+
+        print('Iteration {}: (guess, error) = ({}, {})'.format(len(X)-1,
+                                                               X[-1],
+                                                               e[-1]))
+        print('**********************')
 
     if below_Nmax is False:
         print('Reached maximum iterations (50)')
-    return x2
+    return (np.array(X).T, np.array(e).T)

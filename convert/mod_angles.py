@@ -24,5 +24,11 @@ def mod_angles(X, angle_indices=[5]):
     """
     for k in angle_indices:
         X[:, k:k+1] = np.mod(X[:, k:k+1], 2*np.pi)
+        X[:, k:k+1] = np.array(
+            [x-2*np.pi if x > np.pi else x for x in X[:, k:k+1]]
+        )
+        X[:, k:k+1] = np.array(
+            [x+2*np.pi if x < -np.pi else x for x in X[:, k:k+1]]
+        )
 
     return X

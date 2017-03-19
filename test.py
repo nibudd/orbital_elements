@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import math
 import mcpyi
-import orbital_elements.utilities as utilities
+import orbital_elements.utilities as utl
 import orbital_elements.pose as pose
 import orbital_elements.convert as convert
 import orbital_elements.rv as rv
@@ -108,7 +108,7 @@ class TestRV(unittest.TestCase):
         order_H = 6
         kep_dyn = rv.KeplerianDynamics()
         zon_grav = rv.ZonalGravity(order=order_H)
-        system = utilities.SystemDynamics(kep_dyn, zon_grav)
+        system = utl.SystemDynamics(kep_dyn, zon_grav)
 
         segments = orbits * segs_per_orbit
         domains = [k*period/segs_per_orbit for k in range(segments+1)]
@@ -127,7 +127,7 @@ class TestRV(unittest.TestCase):
         order_H = 6
         kep_dyn_forward = rv.KeplerianDynamics()
         zon_grav = rv.ZonalGravity(order=order_H)
-        sysfor = utilities.SystemDynamics(kep_dyn_forward, zon_grav)
+        sysfor = utl.SystemDynamics(kep_dyn_forward, zon_grav)
 
         segments = orbits * segs_per_orbit
         domains_for = [k*period/segs_per_orbit for k in range(segments+1)]
@@ -141,7 +141,7 @@ class TestRV(unittest.TestCase):
 
         X0_bckward = X_for[-1:]
         kep_dyn_bckward = rv.KeplerianDynamics()
-        sysbck = utilities.SystemDynamics(kep_dyn_bckward, zon_grav)
+        sysbck = utl.SystemDynamics(kep_dyn_bckward, zon_grav)
         domains_bck = [-x for x in domains_for]
         mcpi_bckward = mcpyi.MCPI(sysbck, domains_bck, N, 'warm', X0_bckward,
                                   tol)
@@ -251,7 +251,7 @@ class TestCOE(unittest.TestCase):
         order_H = 6
         kep_dyn = coe.KeplerianDynamics()
         zon_grav = coe.ZonalGravity(order=order_H)
-        system = utilities.SystemDynamics(kep_dyn, perturbations=zon_grav)
+        system = utl.SystemDynamics(kep_dyn, perturbations=zon_grav)
 
         segments = orbits * segs_per_orbit
         domains = [k*period/segs_per_orbit for k in range(segments+1)]
@@ -271,10 +271,10 @@ class TestCOE(unittest.TestCase):
         order_H = 6
         kep_dyn_coe = coe.KeplerianDynamics()
         zon_grav_coe = coe.ZonalGravity(order=order_H)
-        syscoe = utilities.SystemDynamics(kep_dyn_coe, zon_grav_coe)
+        syscoe = utl.SystemDynamics(kep_dyn_coe, zon_grav_coe)
         kep_dyn_rv = rv.KeplerianDynamics()
         zon_grav_rv = rv.ZonalGravity(order=order_H)
-        sysrv = utilities.SystemDynamics(kep_dyn_rv, zon_grav_rv)
+        sysrv = utl.SystemDynamics(kep_dyn_rv, zon_grav_rv)
 
         segments = orbits * segs_per_orbit
         domains = [k*period/segs_per_orbit for k in range(segments+1)]
@@ -295,10 +295,10 @@ class TestCOE(unittest.TestCase):
         order_H = 6
         kep_dyn_coe = coe.KeplerianDynamics()
         zon_grav_coe = coe.ZonalGravity(order=order_H)
-        syscoe = utilities.SystemDynamics(kep_dyn_coe, zon_grav_coe)
+        syscoe = utl.SystemDynamics(kep_dyn_coe, zon_grav_coe)
         kep_dyn_rv = rv.KeplerianDynamics()
         zon_grav_rv = rv.ZonalGravity(order=order_H)
-        sysrv = utilities.SystemDynamics(kep_dyn_rv, zon_grav_rv)
+        sysrv = utl.SystemDynamics(kep_dyn_rv, zon_grav_rv)
 
         segs_per_orbit = 6
         segments = orbits * segs_per_orbit
@@ -319,10 +319,10 @@ class TestCOE(unittest.TestCase):
         u = np.array([[0., 1e-6, 0.]])
         kep_dyn_coe = coe.KeplerianDynamics()
         conthrust_coe = coe.ConstantThrust(u)
-        syscoe = utilities.SystemDynamics(kep_dyn_coe, conthrust_coe)
+        syscoe = utl.SystemDynamics(kep_dyn_coe, conthrust_coe)
         kep_dyn_rv = rv.KeplerianDynamics()
         conthrust_rv = rv.ConstantThrust(u)
-        sysrv = utilities.SystemDynamics(kep_dyn_rv, conthrust_rv)
+        sysrv = utl.SystemDynamics(kep_dyn_rv, conthrust_rv)
 
         segments = orbits * segs_per_orbit
         domains = [k*period/segs_per_orbit for k in range(segments+1)]
@@ -412,7 +412,7 @@ class TestMEE(unittest.TestCase):
         order_H = 6
         kep_dyn = mee.KeplerianDynamics()
         zon_grav = mee.ZonalGravity(order=order_H)
-        system = utilities.SystemDynamics(kep_dyn, perturbations=zon_grav)
+        system = utl.SystemDynamics(kep_dyn, perturbations=zon_grav)
 
         segs_per_orbit = 6
         segments = orbits * segs_per_orbit
@@ -433,10 +433,10 @@ class TestMEE(unittest.TestCase):
         order_H = 6
         kep_dyn_mee = mee.KeplerianDynamics()
         zon_grav_mee = mee.ZonalGravity(order=order_H)
-        sysmee = utilities.SystemDynamics(kep_dyn_mee, zon_grav_mee)
+        sysmee = utl.SystemDynamics(kep_dyn_mee, zon_grav_mee)
         kep_dyn_rv = rv.KeplerianDynamics()
         zon_grav_rv = rv.ZonalGravity(order=order_H)
-        sysrv = utilities.SystemDynamics(kep_dyn_rv, zon_grav_rv)
+        sysrv = utl.SystemDynamics(kep_dyn_rv, zon_grav_rv)
 
         segs_per_orbit = 6
         segments = orbits * segs_per_orbit
@@ -483,10 +483,10 @@ class TestMEE(unittest.TestCase):
         order_H = 6
         kep_dyn_mee = mee.KeplerianDynamics()
         zon_grav_mee = mee.ZonalGravity(order=order_H)
-        sysmee = utilities.SystemDynamics(kep_dyn_mee, zon_grav_mee)
+        sysmee = utl.SystemDynamics(kep_dyn_mee, zon_grav_mee)
         kep_dyn_coe = coe.KeplerianDynamics()
         zon_grav_coe = coe.ZonalGravity(order=order_H)
-        syscoe = utilities.SystemDynamics(kep_dyn_coe, zon_grav_coe)
+        syscoe = utl.SystemDynamics(kep_dyn_coe, zon_grav_coe)
 
         segs_per_orbit = 6
         orbits = 1
@@ -511,10 +511,10 @@ class TestMEE(unittest.TestCase):
         u = np.array([[0., 1e-6, 0.]])
         kep_dyn_mee = mee.KeplerianDynamics()
         conthrust_mee = mee.ConstantThrust(u)
-        sysmee = utilities.SystemDynamics(kep_dyn_mee, conthrust_mee)
+        sysmee = utl.SystemDynamics(kep_dyn_mee, conthrust_mee)
         kep_dyn_rv = rv.KeplerianDynamics()
         conthrust_rv = rv.ConstantThrust(u)
-        sysrv = utilities.SystemDynamics(kep_dyn_rv, conthrust_rv)
+        sysrv = utl.SystemDynamics(kep_dyn_rv, conthrust_rv)
 
         segments = orbits * segs_per_orbit
         domains = [k*period/segs_per_orbit for k in range(segments+1)]
@@ -787,3 +787,21 @@ class TestConvert(unittest.TestCase):
         diff[indices_2pi] -= 2*np.pi
 
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
+
+
+class TestUtilities(unittest.TestCase):
+
+    def test_system_dynamics(self):
+        def plant(T, X):
+            return T+X
+
+        sys = utl.SystemDynamics(plant, [plant, plant, plant])
+        y = sys(2, 3)
+
+        self.assertEqual(y, 20)
+
+    def test_secant_method(self):
+        (X, e) = utl.secant_method(np.sin, np.pi/3, np.pi/4)
+        x0 = X[-1]
+
+        np.testing.assert_allclose(x0, 0, rtol=0, atol=tol)

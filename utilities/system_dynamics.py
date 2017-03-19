@@ -23,7 +23,7 @@ class SystemDynamics():
         plant : callable
             Represents the unperturbed model. Has the same inputs and outputs
             as SystemDynamics().
-        preturbations : list of callables
+        preturbations : callable or list of callables
             Represent perturbations acting on the system. Has the same inputs
             and outputs as SystemDynamics().
     """
