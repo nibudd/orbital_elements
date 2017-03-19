@@ -61,7 +61,7 @@ class GVE(object):
 
         sL = np.sin(L)
         cL = np.cos(L)
-        s = (1. + h**2 + k**2)
+        s = 1. + h**2 + k**2
         w = 1. + f*cL + g*sL
         q = (h*sL - k*cL) / w
         zero = np.zeros(dims)
@@ -69,8 +69,8 @@ class GVE(object):
         pdot = np.concatenate((zero, 2*p/w, zero), axis=2)
         fdot = np.concatenate((sL, ((w+1.)*cL + f)/w, -g*q), axis=2)
         gdot = np.concatenate((-cL, ((w+1.)*sL + g)/w, f*q), axis=2)
-        hdot = np.concatenate((zero, zero, s**2 * cL/2/w), axis=2)
-        kdot = np.concatenate((zero, zero, s**2 * sL/2/w), axis=2)
+        hdot = np.concatenate((zero, zero, s*cL/2/w), axis=2)
+        kdot = np.concatenate((zero, zero, s*sL/2/w), axis=2)
         Ldot = np.concatenate((zero, zero, q), axis=2)
 
         return (p / self.mu)**0.5 * np.concatenate(

@@ -1,7 +1,5 @@
-import orbital_elements.convert as convert
+import numpy as np
 from orbital_elements.mee.gve import GVE
-from orbital_elements.rv.zonal_gravity import ZonalGravity as rvZonalGravity
-
 
 __author__ = "Nathan I. Budd"
 __email__ = "nibudd@gmail.com"
@@ -9,17 +7,27 @@ __copyright__ = "Copyright 2017, LASR Lab"
 __license__ = "MIT"
 __version__ = "0.1"
 __status__ = "Production"
-__date__ = "04 Mar 2017"
+__date__ = "19 Mar 2017"
 
 
-class ZonalGravity(rvZonalGravity):
-    """Zonal gravity dynamics for modified equinoctial elements."""
+class ConstantThrust(object):
+    """Constant LVLH acceleration as MEE time derivatives.
 
-    def __init__(self, mu=1.0, order=2, r_earth=1.0):
-        super().__init__(mu=mu, order=order, r_earth=r_earth)
+    Attributes:
+        u: ndarray
+            3-element array representing the LVLH acceleration in the radial,
+            theta, and normal directions.
+        mu: float, optional
+            Standard Gravitational Parameter. Defaults to 1.0, the standard
+            value in canonical units.
+    """
+
+    def __init__(self, u, mu=1.0):
+        self.u = u.reshape((1, 3, 1))
+        self.mu = mu
 
     def __call__(self, T, X):
-        """Calculate zonal gravity perturations in MEEs.
+        """Calculate constant acceleration as MEE time derivatives.
 
         Args:
             T: ndarray
@@ -38,8 +46,8 @@ class ZonalGravity(rvZonalGravity):
             Xdot: ndarray
                 (m, 6) array of state derivatives.
         """
-        super().lvlh_acceleration(T, convert.rv_mee(X))
-        G = GVE()(T, X)
         m = T.shape[0]
+        u = np.tile(self.u, (m, 1, 1))
+        G = GVE()(T, X)
 
-        return (G @ self.a_lvlh.reshape((m, 3, 1))).reshape((m, 6))
+        return (G @ u).reshape((m, 6))

@@ -45,9 +45,7 @@ class KeplerianDynamics(object):
         f = X[:, 1:2]
         g = X[:, 2:3]
         L = X[:, 5:6]
-        r = p / (1. + f*np.cos(L) + g*np.sin(L))
-        h = (self.mu * p)**0.5
-        L_dot = h / r**2
+        L_dot = (self.mu / p**3)**0.5 * (1 + f*np.cos(L) + g*np.sin(L))**2
 
         return np.concatenate(
             (np.zeros((T.shape[0], 5)), L_dot),

@@ -23,12 +23,26 @@ class ZonalGravity(object):
         r_earth: float, optional
             Equatorial radius of Earth. Defaults to 1.0, Earth's radius in
             canonical units.
+        a_eci: ndarray
+            (m, 3) perturbing acceleration vectors in the ECI frame ordered as
+            (a_1, a_2, a_3), where
+            a_1 = acceleration along the 1-axis
+            a_2 = acceleration along the 2-axis
+            a_3 = acceleration along the 3-axis
+        a_lvlh: ndarray
+            (m, 3) perturbing acceleration vectors in the LVLH frame ordered as
+            (a_r, a_t, a_h), where
+            a_r = acceleration radial direction
+            a_t = acceleration theta direction
+            a_h = acceleration out-of-plane direction
     """
 
     def __init__(self, mu=1.0, order=2, r_earth=1.0):
         self.mu = mu
         self.order = order
         self.r_earth = r_earth
+        self.a_eci = np.array([])
+        self.a_lvlh = np.array([])
 
     def eci_acceleration(self, T, X):
         """Calculate accelerations due to zonal gravity in ECI frame.
@@ -45,14 +59,6 @@ class ZonalGravity(object):
                 vx = velocity x-component
                 vy = velocity y-component
                 vz = velocity z-component
-
-        Returns:
-            a_d: ndarray
-                (m, 3) array of accelerations in the ECI frame ordered as
-                (a_1, a_2, a_3), where
-                a_1 = acceleration along the 1-axis
-                a_2 = acceleration along the 2-axis
-                a_3 = acceleration along the 3-axis
         """
         m = X.shape[0]
         r = np.linalg.norm(X[0:, 0:3], ord=2, axis=1).reshape((m, 1))
@@ -64,10 +70,10 @@ class ZonalGravity(object):
         J = J2_to_6[0:self.order-1]
 
         # calculate and accumulate acceleration terms for each J term
-        a_eci = np.zeros((m, 3))
+        self.a_eci = np.zeros((m, 3))
         try:
             # J2
-            a_eci += (
+            self.a_eci += (
                 (-3./2. * J[0] * (self.mu/r**2) * (self.r_earth/r)**2) *
                 np.concatenate((
                     (1. - 5.*zbr**2) * xbr,
@@ -77,7 +83,7 @@ class ZonalGravity(object):
             )
 
             # J3
-            a_eci += (
+            self.a_eci += (
                 (1./2. * J[1] * (self.mu/r**2) * (self.r_earth/r)**3) *
                 np.concatenate((
                     5.*(7.*zbr**3 - 3.*zbr) * xbr,
@@ -87,7 +93,7 @@ class ZonalGravity(object):
             )
 
             # J4
-            a_eci += (
+            self.a_eci += (
                 (5./8. * J[2] * (self.mu/r**2) * (self.r_earth/r)**4) *
                 np.concatenate((
                     (3. - 42.*zbr**2 + 63.*zbr**4) * xbr,
@@ -97,7 +103,7 @@ class ZonalGravity(object):
             )
 
             # J5
-            a_eci += (
+            self.a_eci += (
                 (1./8. * J[3] * (self.mu/r**2) * (self.r_earth/r)**5) *
                 np.concatenate((
                     3.*(35.*zbr - 210.*zbr**3 + 231.*zbr**5) * xbr,
@@ -107,7 +113,7 @@ class ZonalGravity(object):
             )
 
             # J6
-            a_eci += (
+            self.a_eci += (
                 (-1./16. * J[4] * (self.mu/r**2) * (self.r_earth/r)**6) *
                 np.concatenate((
                     (35. - 945.*zbr**2 + 3465.*zbr**4 - 3003.*zbr**6) * xbr,
@@ -117,8 +123,6 @@ class ZonalGravity(object):
             )
         except IndexError:
             pass
-
-        return a_eci
 
     def lvlh_acceleration(self, T, X):
         """Calculate accelerations due to zonal gravity in LVLH frame.
@@ -135,17 +139,7 @@ class ZonalGravity(object):
                 vx = velocity x-component
                 vy = velocity y-component
                 vz = velocity z-component
-
-        Returns:
-            a_d: ndarray
-                (m, 3) array of accelerations in the LVLH frame ordered as
-                (a_r, a_t, a_h), where
-                a_r = acceleration radial direction
-                a_t = acceleration theta direction
-                a_h = acceleration out-of-plane direction
         """
-        a_eci = self.eci_acceleration(T, X)
-
         # rotate acceleratoin vector from the ECI into the LVLH frame
         r_ = X[:, 0:3]
         v_ = X[:, 3:6]
@@ -161,8 +155,9 @@ class ZonalGravity(object):
         i_h = i_h.reshape(dims)
 
         DCM = np.concatenate((i_r, i_t, i_h), axis=1)
+        self.eci_acceleration(T, X)
 
-        return (DCM @ a_eci.reshape((m, 3, 1))).reshape((m, 3))
+        self.a_lvlh = (DCM @ self.a_eci.reshape((m, 3, 1))).reshape((m, 3))
 
     def __call__(self, T, X):
         """Calculate zonal gravity perturations in position-velocity elements.
@@ -184,8 +179,8 @@ class ZonalGravity(object):
             Xdot: ndarray
                 (m, 6) array of state derivatives.
         """
-        a_d = self.eci_acceleration(T, X)
+        self.eci_acceleration(T, X)
 
         return np.concatenate(
-            (np.zeros((T.shape[0], 3)), a_d),
+            (np.zeros((T.shape[0], 3)), self.a_eci),
             axis=1)

@@ -1,4 +1,5 @@
 import numpy as np
+from orbital_elements.rv.gve import GVE
 
 __author__ = "Nathan I. Budd"
 __email__ = "nibudd@gmail.com"
@@ -6,23 +7,27 @@ __copyright__ = "Copyright 2017, LASR Lab"
 __license__ = "MIT"
 __version__ = "0.1"
 __status__ = "Production"
-__date__ = "03 Mar 2017"
+__date__ = "18 Mar 2017"
 
 
-class GVE(object):
-    """Gauss's Variational Equations equivalent for position-velocity elements.
+class ConstantThrust(object):
+    """Constant LVLH acceleration as position-velocity time derivatives.
 
     Attributes:
+        u: ndarray
+            3-element array representing the LVLH acceleration in the radial,
+            theta, and normal directions.
         mu: float, optional
             Standard Gravitational Parameter. Defaults to 1.0, the standard
             value in canonical units.
     """
 
-    def __init__(self, mu=1.0):
+    def __init__(self, u, mu=1.0):
+        self.u = u.reshape((1, 3, 1))
         self.mu = mu
 
     def __call__(self, T, X):
-        """Calculate GVE matrices for position-velocity elements.
+        """Calculate constant acceleration as RV time derivatives.
 
         Args:
             T: ndarray
@@ -38,26 +43,11 @@ class GVE(object):
                 vz = velocity z-component
 
         Returns:
-            G: ndarray
-                (m, 6, 3) array of GVE matrices.
+            Xdot: ndarray
+                (m, 6) array of state derivatives.
         """
         m = T.shape[0]
-        dims = (m, 3, 1)
+        u = np.tile(self.u, (m, 1, 1))
+        G = GVE()(T, X)
 
-        r = X[:, 0:3]
-        v = X[:, 3:6]
-        h = np.cross(r, v)
-
-        r_norm = np.linalg.norm(r, axis=1, keepdims=True)
-        h_norm = np.linalg.norm(h, axis=1, keepdims=True)
-
-        i_r = r / r_norm
-        i_h = h / h_norm
-        i_t = np.cross(i_h, i_r).reshape(dims)
-        i_r = i_r.reshape(dims)
-        i_h = i_h.reshape(dims)
-
-        # G's bottom rotates acceleration vectors from LVLH to ECI frame
-        G_bottom = np.concatenate((i_r, i_t, i_h), axis=2)
-
-        return np.concatenate((np.zeros((m, 3, 3)), G_bottom), axis=1)
+        return (G @ u).reshape((m, 6))

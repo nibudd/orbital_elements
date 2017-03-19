@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import math
 import mcpyi
-import orbital_mechanics.dynamics as orbdyn
+import orbital_elements.utilities as utilities
 import orbital_elements.pose as pose
 import orbital_elements.convert as convert
 import orbital_elements.rv as rv
@@ -108,7 +108,7 @@ class TestRV(unittest.TestCase):
         order_H = 6
         kep_dyn = rv.KeplerianDynamics()
         zon_grav = rv.ZonalGravity(order=order_H)
-        system = orbdyn.SystemDynamics(kep_dyn, perturbations=zon_grav)
+        system = utilities.SystemDynamics(kep_dyn, zon_grav)
 
         segments = orbits * segs_per_orbit
         domains = [k*period/segs_per_orbit for k in range(segments+1)]
@@ -127,7 +127,7 @@ class TestRV(unittest.TestCase):
         order_H = 6
         kep_dyn_forward = rv.KeplerianDynamics()
         zon_grav = rv.ZonalGravity(order=order_H)
-        sysfor = orbdyn.SystemDynamics(kep_dyn_forward, perturbations=zon_grav)
+        sysfor = utilities.SystemDynamics(kep_dyn_forward, zon_grav)
 
         segments = orbits * segs_per_orbit
         domains_for = [k*period/segs_per_orbit for k in range(segments+1)]
@@ -141,14 +141,14 @@ class TestRV(unittest.TestCase):
 
         X0_bckward = X_for[-1:]
         kep_dyn_bckward = rv.KeplerianDynamics()
-        sysbck = orbdyn.SystemDynamics(kep_dyn_bckward, perturbations=zon_grav)
+        sysbck = utilities.SystemDynamics(kep_dyn_bckward, zon_grav)
         domains_bck = [-x for x in domains_for]
         mcpi_bckward = mcpyi.MCPI(sysbck, domains_bck, N, 'warm', X0_bckward,
                                   tol)
         T_bck = np.linspace(0, -10, num=m).reshape((m, 1))
         X_bck = mcpi_bckward.solve_serial()(T_bck)
 
-        np.testing.assert_allclose(X0_forward, X_bck[-1:], rtol=0, atol=1e-13)
+        np.testing.assert_allclose(X0_forward, X_bck[-1:], rtol=0, atol=tol*10)
 
 
 class TestCOE(unittest.TestCase):
@@ -251,7 +251,7 @@ class TestCOE(unittest.TestCase):
         order_H = 6
         kep_dyn = coe.KeplerianDynamics()
         zon_grav = coe.ZonalGravity(order=order_H)
-        system = orbdyn.SystemDynamics(kep_dyn, perturbations=zon_grav)
+        system = utilities.SystemDynamics(kep_dyn, perturbations=zon_grav)
 
         segments = orbits * segs_per_orbit
         domains = [k*period/segs_per_orbit for k in range(segments+1)]
@@ -271,10 +271,58 @@ class TestCOE(unittest.TestCase):
         order_H = 6
         kep_dyn_coe = coe.KeplerianDynamics()
         zon_grav_coe = coe.ZonalGravity(order=order_H)
-        syscoe = orbdyn.SystemDynamics(kep_dyn_coe, perturbations=zon_grav_coe)
+        syscoe = utilities.SystemDynamics(kep_dyn_coe, zon_grav_coe)
         kep_dyn_rv = rv.KeplerianDynamics()
         zon_grav_rv = rv.ZonalGravity(order=order_H)
-        sysrv = orbdyn.SystemDynamics(kep_dyn_rv, perturbations=zon_grav_rv)
+        sysrv = utilities.SystemDynamics(kep_dyn_rv, zon_grav_rv)
+
+        segments = orbits * segs_per_orbit
+        domains = [k*period/segs_per_orbit for k in range(segments+1)]
+        seg_number = len(domains) - 1
+        N = (order_mcpi,) * seg_number
+        mcpi_coe = mcpyi.MCPI(syscoe, domains, N, 'warm', X0_coe, tol)
+        mcpi_rv = mcpyi.MCPI(sysrv, domains, N, 'warm', X0_rv, tol)
+
+        X_coe = mcpi_coe.solve_serial()(T)
+        X_rv = mcpi_rv.solve_serial()(T)
+
+        np.testing.assert_allclose(X_rv, convert.rv_coe(X_coe), rtol=0,
+                                   atol=tol*10)
+
+    def test_compare_a_eci_to_rv(self):
+        X0_coe = coe_0
+        X0_rv = rv_0
+        order_H = 6
+        kep_dyn_coe = coe.KeplerianDynamics()
+        zon_grav_coe = coe.ZonalGravity(order=order_H)
+        syscoe = utilities.SystemDynamics(kep_dyn_coe, zon_grav_coe)
+        kep_dyn_rv = rv.KeplerianDynamics()
+        zon_grav_rv = rv.ZonalGravity(order=order_H)
+        sysrv = utilities.SystemDynamics(kep_dyn_rv, zon_grav_rv)
+
+        segs_per_orbit = 6
+        segments = orbits * segs_per_orbit
+        domains = [k*period/segs_per_orbit for k in range(segments+1)]
+        seg_number = len(domains) - 1
+        N = (order_mcpi,) * seg_number
+        mcpi_coe = mcpyi.MCPI(syscoe, domains, N, 'warm', X0_coe, tol)
+        mcpi_rv = mcpyi.MCPI(sysrv, domains, N, 'warm', X0_rv, tol)
+        mcpi_coe.solve_serial()(T)
+        mcpi_rv.solve_serial()(T)
+
+        np.testing.assert_allclose(zon_grav_coe.a_eci, zon_grav_rv.a_eci,
+                                   rtol=0, atol=tol)
+
+    def test_compare_constant_thrust_to_rv(self):
+        X0_coe = coe_0
+        X0_rv = rv_0
+        u = np.array([[0., 1e-6, 0.]])
+        kep_dyn_coe = coe.KeplerianDynamics()
+        conthrust_coe = coe.ConstantThrust(u)
+        syscoe = utilities.SystemDynamics(kep_dyn_coe, conthrust_coe)
+        kep_dyn_rv = rv.KeplerianDynamics()
+        conthrust_rv = rv.ConstantThrust(u)
+        sysrv = utilities.SystemDynamics(kep_dyn_rv, conthrust_rv)
 
         segments = orbits * segs_per_orbit
         domains = [k*period/segs_per_orbit for k in range(segments+1)]
@@ -361,11 +409,12 @@ class TestMEE(unittest.TestCase):
 
     def test_zonal_gravity(self):
         X0 = mee_0
-        order_H = 2
+        order_H = 6
         kep_dyn = mee.KeplerianDynamics()
         zon_grav = mee.ZonalGravity(order=order_H)
-        system = orbdyn.SystemDynamics(kep_dyn, perturbations=zon_grav)
+        system = utilities.SystemDynamics(kep_dyn, perturbations=zon_grav)
 
+        segs_per_orbit = 6
         segments = orbits * segs_per_orbit
         domains = [k*period/segs_per_orbit for k in range(segments+1)]
         seg_number = len(domains) - 1
@@ -376,31 +425,109 @@ class TestMEE(unittest.TestCase):
 
         H = mee.Hamiltonian(order=order_H)(T, X)
 
-        np.testing.assert_allclose(H[0, 0], H, rtol=tol*10**4)
+        np.testing.assert_allclose(H[0, 0], H, rtol=0, atol=tol*10)
 
     def test_compare_zonal_to_rv(self):
-        X0_coe = coe_0
+        X0_mee = mee_0
         X0_rv = rv_0
-        order_H = 2
-        kep_dyn_coe = coe.KeplerianDynamics()
-        zon_grav_coe = coe.ZonalGravity(order=order_H)
-        syscoe = orbdyn.SystemDynamics(kep_dyn_coe, perturbations=zon_grav_coe)
+        order_H = 6
+        kep_dyn_mee = mee.KeplerianDynamics()
+        zon_grav_mee = mee.ZonalGravity(order=order_H)
+        sysmee = utilities.SystemDynamics(kep_dyn_mee, zon_grav_mee)
         kep_dyn_rv = rv.KeplerianDynamics()
         zon_grav_rv = rv.ZonalGravity(order=order_H)
-        sysrv = orbdyn.SystemDynamics(kep_dyn_rv, perturbations=zon_grav_rv)
+        sysrv = utilities.SystemDynamics(kep_dyn_rv, zon_grav_rv)
+
+        segs_per_orbit = 6
+        segments = orbits * segs_per_orbit
+        domains = [k*period/segs_per_orbit for k in range(segments+1)]
+        seg_number = len(domains) - 1
+        N = (order_mcpi,) * seg_number
+        mcpi_mee = mcpyi.MCPI(sysmee, domains, N, 'warm', X0_mee, tol)
+        mcpi_rv = mcpyi.MCPI(sysrv, domains, N, 'warm', X0_rv, tol)
+
+        X_mee = mcpi_mee.solve_serial()(T)
+        X_rv = mcpi_rv.solve_serial()(T)
+
+        np.testing.assert_allclose(X_rv, convert.rv_mee(X_mee), rtol=0,
+                                   atol=tol*10)
+
+    def test_compare_a_eci_to_rv(self):
+        X0_mee = mee_0
+        X0_rv = rv_0
+        order_H = 6
+        kep_dyn_mee = mee.KeplerianDynamics()
+        zon_grav_mee = mee.ZonalGravity(order=order_H)
+        kep_dyn_rv = rv.KeplerianDynamics()
+        zon_grav_rv = rv.ZonalGravity(order=order_H)
+
+        segs_per_orbit = 6
+        segments = orbits * segs_per_orbit
+        domains = [k*period/segs_per_orbit for k in range(segments+1)]
+        seg_number = len(domains) - 1
+        N = (order_mcpi,) * seg_number
+        mcpi_mee = mcpyi.MCPI(kep_dyn_mee, domains, N, 'warm', X0_mee, tol)
+        mcpi_rv = mcpyi.MCPI(kep_dyn_rv, domains, N, 'warm', X0_rv, tol)
+        X_mee = mcpi_mee.solve_serial()(T)
+        X_rv = mcpi_rv.solve_serial()(T)
+
+        zon_grav_mee.eci_acceleration(T, convert.rv_mee(X_mee))
+        zon_grav_rv.eci_acceleration(T, X_rv)
+
+        np.testing.assert_allclose(zon_grav_mee.a_eci, zon_grav_rv.a_eci,
+                                   rtol=0, atol=tol)
+
+    def test_compare_zonal_to_coe(self):
+        X0_mee = mee_0
+        X0_coe = coe_0
+        order_H = 6
+        kep_dyn_mee = mee.KeplerianDynamics()
+        zon_grav_mee = mee.ZonalGravity(order=order_H)
+        sysmee = utilities.SystemDynamics(kep_dyn_mee, zon_grav_mee)
+        kep_dyn_coe = coe.KeplerianDynamics()
+        zon_grav_coe = coe.ZonalGravity(order=order_H)
+        syscoe = utilities.SystemDynamics(kep_dyn_coe, zon_grav_coe)
+
+        segs_per_orbit = 6
+        orbits = 1
+        segments = orbits * segs_per_orbit
+        domains = [k*period/segs_per_orbit for k in range(segments+1)]
+        seg_number = len(domains) - 1
+        N = (order_mcpi,) * seg_number
+        mcpi_mee = mcpyi.MCPI(sysmee, domains, N, 'warm', X0_mee, tol)
+        mcpi_coe = mcpyi.MCPI(syscoe, domains, N, 'warm', X0_coe, tol)
+        X_mee = mcpi_mee.solve_serial()(T)
+        X_coe = mcpi_coe.solve_serial()(T)
+
+        diff = convert.mod_angles(np.abs(X_coe-convert.coe_mee(X_mee)))
+        indices_2pi = np.where(2*np.pi-tol < diff)
+        diff[indices_2pi] -= 2*np.pi
+
+        np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
+
+    def test_compare_constant_thrust_to_rv(self):
+        X0_mee = mee_0
+        X0_rv = rv_0
+        u = np.array([[0., 1e-6, 0.]])
+        kep_dyn_mee = mee.KeplerianDynamics()
+        conthrust_mee = mee.ConstantThrust(u)
+        sysmee = utilities.SystemDynamics(kep_dyn_mee, conthrust_mee)
+        kep_dyn_rv = rv.KeplerianDynamics()
+        conthrust_rv = rv.ConstantThrust(u)
+        sysrv = utilities.SystemDynamics(kep_dyn_rv, conthrust_rv)
 
         segments = orbits * segs_per_orbit
         domains = [k*period/segs_per_orbit for k in range(segments+1)]
         seg_number = len(domains) - 1
         N = (order_mcpi,) * seg_number
-        mcpi_coe = mcpyi.MCPI(syscoe, domains, N, 'warm', X0_coe, tol)
+        mcpi_mee = mcpyi.MCPI(sysmee, domains, N, 'warm', X0_mee, tol)
         mcpi_rv = mcpyi.MCPI(sysrv, domains, N, 'warm', X0_rv, tol)
 
-        X_coe = mcpi_coe.solve_serial()(T)
+        X_mee = mcpi_mee.solve_serial()(T)
         X_rv = mcpi_rv.solve_serial()(T)
 
-        np.testing.assert_allclose(X_rv, convert.rv_coe(X_coe), rtol=0,
-                                   atol=1e-13)
+        np.testing.assert_allclose(X_rv, convert.rv_mee(X_mee), rtol=0,
+                                   atol=tol*10)
 
 
 class TestPose(unittest.TestCase):
