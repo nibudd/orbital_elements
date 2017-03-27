@@ -43,7 +43,6 @@ def mee_rv(rv, mu=1.):
     m = rv.shape[0]
 
     r_norm = np.linalg.norm(r, ord=2, axis=1, keepdims=True)
-    v_norm = np.linalg.norm(v, ord=2, axis=1, keepdims=True)
 
     # angular momentum
     ang_mom = np.cross(r, v)
