@@ -788,6 +788,29 @@ class TestConvert(unittest.TestCase):
 
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
+    def test_mee_meeMl0_mee(self):
+        T = np.linspace(0, 10, num=m)
+        mee = convert.mod_angles(convert.mee_coe(coe_f))
+        meeMl0 = convert.meeMl0_mee(T, mee)
+        mee2 = convert.mod_angles(convert.mee_meeMl0(T, meeMl0))
+        diff = convert.mod_angles(np.abs(mee-mee2), angle_indices=[5])
+        indices_2pi = np.where(2*np.pi-tol < diff)
+        diff[indices_2pi] -= 2*np.pi
+
+        np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
+
+    def test_meeMl0_mee_meeMl0(self):
+        T = np.linspace(0, 10, num=m)
+        mee = convert.mod_angles(convert.mee_coe(coe_f))
+        meeMl0 = convert.meeMl0_mee(T, mee)
+        mee = convert.mee_meeMl0(T, meeMl0)
+        meeMl02 = convert.mod_angles(convert.meeMl0_mee(T, mee))
+        diff = convert.mod_angles(np.abs(meeMl0-meeMl02), angle_indices=[5])
+        indices_2pi = np.where(2*np.pi-tol < diff)
+        diff[indices_2pi] -= 2*np.pi
+
+        np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
+
 
 class TestUtilities(unittest.TestCase):
 
