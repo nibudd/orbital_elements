@@ -7,11 +7,11 @@ __copyright__ = "Copyright 2017, LASR Lab"
 __license__ = "MIT"
 __version__ = "0.1"
 __status__ = "Production"
-__date__ = "06 Mar 2017"
+__date__ = "27 Mar 2017"
 
 
 class Hamiltonian(object):
-    """Hamiltonian for modified equinoctial elements.
+    """Hamiltonian for MEEs with mean longitude at epoch.
 
     Attributes:
         mu: float, optional
@@ -39,13 +39,13 @@ class Hamiltonian(object):
                 (m, 1) array of times.
             X: ndarray
                 (m, 6) array of modified equinoctial elements ordered as
-                (p, f, g, h, k, L), where
+                (p, f, g, h, k, Ml0), where
                 p = semi-latus rectum
                 f = 1-component of eccentricity vector in perifocal frame
                 g = 2-component of eccentricity vector in perifocal frame
                 h = 1-component of the ascending node vector in equ. frame
                 k = 2-component of the ascending node vector in equ. frame
-                L = true longitude
+                Ml0 = mean longitude at epoch
 
         Returns:
             H_rel: ndarray
@@ -53,4 +53,8 @@ class Hamiltonian(object):
         """
         Hamiltonian = rvHam(mu=self.mu, order=self.order, r_earth=self.r_earth)
 
-        return Hamiltonian(T, convert.rv_mee(X))
+        return Hamiltonian(
+            T, convert.rv_mee(
+                convert.mee_meeMl0(T, X, mu=self.mu)
+                )
+            )
