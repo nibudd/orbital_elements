@@ -1,5 +1,5 @@
-import numpy as np
-from .meefl_meeMl import meefl_meeMl
+from .rv_mee import rv_mee
+from .mee_meeMl0 import mee_meeMl0
 
 __author__ = "Nathan I. Budd"
 __email__ = "nibudd@gmail.com"
@@ -7,11 +7,11 @@ __copyright__ = "Copyright 2017, LASR Lab"
 __license__ = "MIT"
 __version__ = "0.1"
 __status__ = "Production"
-__date__ = "27 Mar 2017"
+__date__ = "30 Mar 2017"
 
 
-def mee_meeMl0(T, meeMl0, mu=1.0):
-    """Convert MEEs with mean longitude at epoch to MEEs.
+def rv_meeMl0(T, meeMl0, mu=1.0):
+    """Convert MEEs with mean longitude at epoch to RV.
 
     Args:
         T: ndarray
@@ -30,23 +30,15 @@ def mee_meeMl0(T, meeMl0, mu=1.0):
             value in canonical units.
 
     Returns:
-        mee: ndarray
-            (m, 6) array of modified equinoctial elements ordered as
-            (p, f, g, h, k, L), where
-            p = semi-latus rectum
-            f = 1-component of eccentricity vector in perifocal frame
-            g = 2-component of eccentricity vector in perifocal frame
-            h = 1-component of the ascending node vector in equinoctial frame
-            k = 2-component of the ascending node vector in equinoctial frame
-            L = true longitude
+        rv: ndarray
+            (m, 6) array of position-velocity elements ordered as
+            (rx, ry, rz, vx, vy, vz),
+            where
+            rx = position x-component
+            ry = position y-component
+            rz = position z-component
+            vx = velocity x-component
+            vy = velocity y-component
+            vz = velocity z-component
     """
-    p = meeMl0[:, 0:1]
-    f = meeMl0[:, 1:2]
-    g = meeMl0[:, 2:3]
-    Ml0 = meeMl0[:, 5:6]
-
-    a = p / (1 - f**2 - g**2)
-    n = (mu / a**3)**0.5
-    Ml = Ml0 + n*T
-
-    return meefl_meeMl(np.concatenate((meeMl0[:, 0:5], Ml), axis=1))
+    return rv_mee(mee_meeMl0(T, meeMl0))

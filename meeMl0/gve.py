@@ -79,38 +79,19 @@ class GVE(object):
         hdot = np.concatenate((zero, zero, s*cL/2/w), axis=2)
         kdot = np.concatenate((zero, zero, s*sL/2/w), axis=2)
 
-        b_by_a = (2 - w)**0.5
+        b_by_a = (1 - f**2 - g**2)**0.5
         a_by_a_plus_b = 1 / (1 + b_by_a)
-        # Mldot = np.concatenate(
-        #     (
-        #         a_by_a_plus_b * w*(w-1) + 2*b_by_a,
-        #         a_by_a_plus_b * (w+1) * (g*cL - f*sL),
-        #         k*cL - h*sL
-        #         ), axis=2) / -w
-        X_coe = convert.coe_mee(X_L)
-        a = X[:, 0:1].reshape(dims)
-        e = X[:, 1:2].reshape(dims)
-        i = X[:, 2:3].reshape(dims)
-        w = X[:, 4:5].reshape(dims)
-        v = X[:, 5:6].reshape(dims)
-        st = np.sin(v+w)
-        ci = np.cos(i)
-        si = np.sin(i)
-        cv = np.cos(v)
-        sv = np.sin(v)
-        r = p / (1. + e*cv)
-        H = (self.mu * p)**.5
-        b = a * (1 - e**2)**0.5
-        Wdot = np.concatenate((zero, zero, r*st/H/si), axis=2)
-        wdot = np.concatenate((-p*cv/e, (p+r)*sv/e, -r*st*ci/si), axis=2) / H
-        Mdot = np.concatenate((p*cv-2*r*e, -(p+r)*sv, zero), axis=2) * b/a/H/e
-        Mldot = Mdot + Wdot + wdot
+        Mldot = np.concatenate(
+         (
+             a_by_a_plus_b * w*(w-1) + 2*b_by_a,
+             a_by_a_plus_b * (w+1) * (g*cL - f*sL),
+             k*cL - h*sL
+             ), axis=2) / -w
 
-        ndot = -3/2 * self.mu / p**3 * b_by_a * ((2-w)*pdot +
-                                                 2*p*(f*fdot + g*gdot))
-        # ndot = np.concatenate(
-        #     (f*sL - g*cL, w, zero), axis=2
-        #     ) * -3 * (self.mu / p**3) * b_by_a
+        ndot = np.concatenate(
+            (f*sL - g*cL, w, zero), axis=2
+            ) * -3 * (self.mu / p**3)**.5 * b_by_a
+
         Ml0dot = Mldot - ndot*T.reshape(dims)
 
         return (p / self.mu)**0.5 * np.concatenate(

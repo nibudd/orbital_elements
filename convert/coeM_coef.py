@@ -1,6 +1,6 @@
 import numpy as np
-from orbital_elements.convert.coeE_coef import coeE_coef
-from orbital_elements.convert.coeM_coeE import coeM_coeE
+from .coeE_coef import coeE_coef
+from .coeM_coeE import coeM_coeE
 
 __author__ = "Nathan I. Budd"
 __email__ = "nibudd@gmail.com"

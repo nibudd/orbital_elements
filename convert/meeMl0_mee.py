@@ -1,5 +1,5 @@
 import numpy as np
-from orbital_elements.convert.meeMl_meefl import meeMl_meefl
+from .meeMl_meefl import meeMl_meefl
 
 __author__ = "Nathan I. Budd"
 __email__ = "nibudd@gmail.com"

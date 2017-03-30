@@ -1,5 +1,5 @@
 import numpy as np
-from orbital_elements.rv.gve import GVE
+from .gve import GVE
 
 __author__ = "Nathan I. Budd"
 __email__ = "nibudd@gmail.com"

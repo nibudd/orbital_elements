@@ -41,7 +41,7 @@ mee_0 = convert.mee_coe(coe_0)
 
 T = np.linspace(0, 10, num=m).reshape((m, 1))
 meeMl0_0 = convert.meeMl0_mee(T[0:1], mee_0)
-coe_f = coe.KeplerianSolution(coe_0)(T)
+coe_sltn = coe.KeplerianSolution(coe_0)(T)
 
 orbits = math.ceil(T[-1]/period)
 segs_per_orbit = 3
@@ -510,7 +510,7 @@ class TestMEE(unittest.TestCase):
     def test_compare_constant_thrust_to_rv(self):
         X0_mee = mee_0
         X0_rv = rv_0
-        u = np.array([[0., 1e-6, 0.]])
+        u = np.array([[1e-6, 1e-6, 1e-6]])
         kep_dyn_mee = mee.KeplerianDynamics()
         conthrust_mee = mee.ConstantThrust(u)
         sysmee = utl.SystemDynamics(kep_dyn_mee, conthrust_mee)
@@ -656,10 +656,10 @@ class TestMEEMl0(unittest.TestCase):
         X_rv = mcpi_rv.solve_serial()(T)
         diff = convert.mod_angles(X_meeMl0 -
                                   convert.meeMl0_mee(T, convert.mee_rv(X_rv)))
-        import pdb;pdb.set_trace()
+
         np.testing.assert_allclose(diff, 0.0, rtol=0, atol=tol*10)
-"""
-   def test_compare_constant_r_thrust_to_rv(self):
+
+    def test_compare_constant_r_thrust_to_rv(self):
         X0_meeMl0 = meeMl0_0
         X0_rv = rv_0
         u = np.array([[1e-6, 0., 0.]])
@@ -683,7 +683,7 @@ class TestMEEMl0(unittest.TestCase):
         np.testing.assert_allclose(
             X_rv,
             convert.rv_mee(convert.mee_meeMl0(T, X_meeMl0)),
-            rtol=0, atol=tol*10)
+            rtol=0, atol=tol)
 
     def test_compare_constant_theta_thrust_to_rv(self):
         X0_meeMl0 = meeMl0_0
@@ -783,35 +783,6 @@ class TestMEEMl0(unittest.TestCase):
             convert.rv_mee(convert.mee_meeMl0(T, X_meeMl0)),
             rtol=0, atol=tol*10)
 
-    def test_compare_zonal_to_coe(self):
-        X0_meeMl0 = meeMl0_0
-        X0_coe = coe_0
-        order_H = 6
-        kep_dyn_meeMl0 = meeMl0.KeplerianDynamics()
-        zon_grav_meeMl0 = meeMl0.ZonalGravity(order=order_H)
-        sysmeeMl0 = utl.SystemDynamics(kep_dyn_meeMl0, zon_grav_meeMl0)
-        kep_dyn_coe = coe.KeplerianDynamics()
-        zon_grav_coe = coe.ZonalGravity(order=order_H)
-        syscoe = utl.SystemDynamics(kep_dyn_coe, zon_grav_coe)
-
-        segs_per_orbit = 6
-        orbits = 1
-        segments = orbits * segs_per_orbit
-        domains = [k*period/segs_per_orbit for k in range(segments+1)]
-        seg_number = len(domains) - 1
-        N = (order_mcpi,) * seg_number
-        mcpi_meeMl0 = mcpyi.MCPI(sysmeeMl0, domains, N, 'warm', X0_meeMl0, tol)
-        mcpi_coe = mcpyi.MCPI(syscoe, domains, N, 'warm', X0_coe, tol)
-        X_meeMl0 = mcpi_meeMl0.solve_serial()(T)
-        X_coe = mcpi_coe.solve_serial()(T)
-
-        diff = convert.mod_angles(np.abs(X_coe-convert.coe_meeMl0(X_meeMl0)))
-        indices_2pi = np.where(2*np.pi-tol < diff)
-        diff[indices_2pi] -= 2*np.pi
-
-        np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
-    """
-
 
 class TestPose(unittest.TestCase):
 
@@ -833,7 +804,7 @@ class TestPose(unittest.TestCase):
 class TestConvert(unittest.TestCase):
 
     def test_coef_coeE_coef(self):
-        coef = convert.mod_angles(coe_f)
+        coef = convert.mod_angles(coe_sltn)
         coeE = convert.coeE_coef(coef)
         coef2 = convert.mod_angles(convert.coef_coeE(coeE))
         diff = convert.mod_angles(np.abs(coef-coef2), angle_indices=[0])
@@ -843,7 +814,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_coeE_coef_coeE(self):
-        coeE = convert.mod_angles(convert.coeE_coef(coe_f))
+        coeE = convert.mod_angles(convert.coeE_coef(coe_sltn))
         coef = convert.coef_coeE(coeE)
         coeE2 = convert.mod_angles(convert.coeE_coef(coef))
         diff = convert.mod_angles(np.abs(coeE-coeE2), angle_indices=[0])
@@ -853,7 +824,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_coeE_coeM_coeE(self):
-        coeE = convert.mod_angles(convert.coeE_coef(coe_f))
+        coeE = convert.mod_angles(convert.coeE_coef(coe_sltn))
         coeM = convert.coeM_coeE(coeE)
         coeE2 = convert.mod_angles(convert.coeE_coeM(coeM))
         diff = convert.mod_angles(np.abs(coeE-coeE2), angle_indices=[0])
@@ -863,7 +834,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_coeM_coeE_coeM(self):
-        coeE = convert.coeE_coef(coe_f)
+        coeE = convert.coeE_coef(coe_sltn)
         coeM = convert.mod_angles(convert.coeM_coeE(coeE))
         coeE = convert.coeE_coeM(coeM)
         coeM2 = convert.mod_angles(convert.coeM_coeE(coeE))
@@ -874,7 +845,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_coef_coeM_coef(self):
-        coef = convert.mod_angles(coe_f)
+        coef = convert.mod_angles(coe_sltn)
         coeM = convert.coeM_coef(coef)
         coef2 = convert.mod_angles(convert.coef_coeM(coeM))
         diff = convert.mod_angles(np.abs(coef-coef2), angle_indices=[0])
@@ -884,7 +855,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_coeM_coef_coeM(self):
-        coeM = convert.mod_angles(convert.coeM_coef(coe_f))
+        coeM = convert.mod_angles(convert.coeM_coef(coe_sltn))
         coef = convert.coef_coeM(coeM)
         coeM2 = convert.mod_angles(convert.coeM_coef(coef))
         diff = convert.mod_angles(np.abs(coeM-coeM2), angle_indices=[0])
@@ -894,7 +865,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_coe_mee_coe(self):
-        coe = convert.mod_angles(coe_f)
+        coe = convert.mod_angles(coe_sltn)
         mee = convert.mee_coe(coe)
         coe2 = convert.mod_angles(convert.coe_mee(mee))
         diff = convert.mod_angles(np.abs(coe-coe2), angle_indices=[2, 3, 4, 5])
@@ -904,7 +875,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_mee_coe_mee(self):
-        mee = convert.mod_angles(convert.mee_coe(coe_f))
+        mee = convert.mod_angles(convert.mee_coe(coe_sltn))
         coe = convert.coe_mee(mee)
         mee2 = convert.mod_angles(convert.mee_coe(coe))
         diff = convert.mod_angles(np.abs(mee-mee2), angle_indices=[5])
@@ -914,14 +885,14 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_mee_rv_mee(self):
-        mee = convert.mod_angles(convert.mee_coe(coe_f))
+        mee = convert.mod_angles(convert.mee_coe(coe_sltn))
         rv = convert.rv_mee(mee)
         mee2 = convert.mod_angles(convert.mee_rv(rv))
 
         np.testing.assert_allclose(mee, mee2, rtol=0, atol=tol)
 
     def test_rv_mee_rv(self):
-        mee = convert.mod_angles(convert.mee_coe(coe_f))
+        mee = convert.mod_angles(convert.mee_coe(coe_sltn))
         rv = convert.rv_mee(mee)
         mee = convert.mee_rv(rv)
         rv2 = convert.rv_mee(mee)
@@ -929,7 +900,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(rv, rv2, rtol=0, atol=tol)
 
     def test_coe_rv_coe(self):
-        coe = coe_f
+        coe = coe_sltn
         rv = convert.rv_coe(coe)
         coe2 = convert.coe_rv(rv)
         diff = convert.mod_angles(np.abs(coe-coe2), angle_indices=[2, 3, 4, 5])
@@ -939,14 +910,14 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol*10)
 
     def test_rv_coe_rv(self):
-        rv = convert.rv_coe(coe_f)
+        rv = convert.rv_coe(coe_sltn)
         coe = convert.coe_rv(rv)
         rv2 = convert.rv_coe(coe)
 
         np.testing.assert_allclose(rv, rv2, rtol=0, atol=tol)
 
     def test_meeEl_meeMl_meeEl(self):
-        meeEl = convert.mod_angles(convert.mee_coe(coe_f))
+        meeEl = convert.mod_angles(convert.mee_coe(coe_sltn))
         meeMl = convert.meeMl_meeEl(meeEl)
         meeEl2 = convert.mod_angles(convert.meeEl_meeMl(meeMl))
         diff = convert.mod_angles(np.abs(meeEl-meeEl2),
@@ -957,7 +928,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_meeMl_meeEl_meeMl(self):
-        meeEl = convert.mod_angles(convert.mee_coe(coe_f))
+        meeEl = convert.mod_angles(convert.mee_coe(coe_sltn))
         meeMl = convert.mod_angles(convert.meeMl_meeEl(meeEl))
         meeEl = convert.meeEl_meeMl(meeMl)
         meeMl2 = convert.mod_angles(convert.meeMl_meeEl(meeEl))
@@ -968,7 +939,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_meeEl_meefl_meeEl(self):
-        meeEl = convert.mod_angles(convert.mee_coe(coe_f))
+        meeEl = convert.mod_angles(convert.mee_coe(coe_sltn))
         meefl = convert.meefl_meeEl(meeEl)
         meeEl2 = convert.mod_angles(convert.meeEl_meefl(meefl))
         diff = convert.mod_angles(np.abs(meeEl-meeEl2),
@@ -979,7 +950,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_meefl_meeEl_meefl(self):
-        meeEl = convert.mod_angles(convert.mee_coe(coe_f))
+        meeEl = convert.mod_angles(convert.mee_coe(coe_sltn))
         meefl = convert.mod_angles(convert.meefl_meeEl(meeEl))
         meeEl = convert.meeEl_meefl(meefl)
         meefl2 = convert.mod_angles(convert.meefl_meeEl(meeEl))
@@ -990,7 +961,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_meefl_meeMl_meefl(self):
-        meefl = convert.mod_angles(convert.mee_coe(coe_f))
+        meefl = convert.mod_angles(convert.mee_coe(coe_sltn))
         meeMl = convert.meeMl_meefl(meefl)
         meefl2 = convert.mod_angles(convert.meefl_meeMl(meeMl))
         diff = convert.mod_angles(np.abs(meefl-meefl2),
@@ -1001,7 +972,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_meeMl_meefl_meeMl(self):
-        meefl = convert.mod_angles(convert.mee_coe(coe_f))
+        meefl = convert.mod_angles(convert.mee_coe(coe_sltn))
         meeMl = convert.mod_angles(convert.meeMl_meefl(meefl))
         meefl = convert.meefl_meeMl(meeMl)
         meeMl2 = convert.mod_angles(convert.meeMl_meefl(meefl))
@@ -1012,7 +983,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_compare_meeMl_meeEl_to_coeM_coeE(self):
-        coeE = convert.mod_angles(coe_f)
+        coeE = convert.mod_angles(coe_sltn)
         meeEl = convert.mee_coe(coeE)
 
         coeM = convert.coeM_coeE(coeE)
@@ -1027,7 +998,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_compare_meeEl_meeMl_to_coeE_coeM(self):
-        coeM = convert.mod_angles(coe_f)
+        coeM = convert.mod_angles(coe_sltn)
         meeMl = convert.mee_coe(coeM)
 
         coeE = convert.coeM_coeE(coeM)
@@ -1042,7 +1013,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_compare_meefl_meeEl_to_coef_coeE(self):
-        coeE = convert.mod_angles(coe_f)
+        coeE = convert.mod_angles(coe_sltn)
         meeEl = convert.mee_coe(coeE)
 
         coef = convert.coef_coeE(coeE)
@@ -1057,7 +1028,7 @@ class TestConvert(unittest.TestCase):
         np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
 
     def test_compare_meeEl_meefl_to_coeE_coef(self):
-        coef = convert.mod_angles(coe_f)
+        coef = convert.mod_angles(coe_sltn)
         meefl = convert.mee_coe(coef)
 
         coeE = convert.coeE_coef(coef)
@@ -1073,7 +1044,7 @@ class TestConvert(unittest.TestCase):
 
     def test_mee_meeMl0_mee(self):
         T = np.linspace(0, 10, num=m)
-        mee = convert.mod_angles(convert.mee_coe(coe_f))
+        mee = convert.mod_angles(convert.mee_coe(coe_sltn))
         meeMl0 = convert.meeMl0_mee(T, mee)
         mee2 = convert.mod_angles(convert.mee_meeMl0(T, meeMl0))
         diff = convert.mod_angles(np.abs(mee-mee2), angle_indices=[5])
@@ -1084,11 +1055,55 @@ class TestConvert(unittest.TestCase):
 
     def test_meeMl0_mee_meeMl0(self):
         T = np.linspace(0, 10, num=m)
-        mee = convert.mod_angles(convert.mee_coe(coe_f))
+        mee = convert.mod_angles(convert.mee_coe(coe_sltn))
         meeMl0 = convert.meeMl0_mee(T, mee)
         mee = convert.mee_meeMl0(T, meeMl0)
         meeMl02 = convert.mod_angles(convert.meeMl0_mee(T, mee))
         diff = convert.mod_angles(np.abs(meeMl0-meeMl02), angle_indices=[5])
+        indices_2pi = np.where(2*np.pi-tol < diff)
+        diff[indices_2pi] -= 2*np.pi
+
+        np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
+
+    def test_meeMl0_coe_meeMl0(self):
+        T = np.linspace(0, 10, num=m)
+        meeMl0 = convert.meeMl0_coe(T, coe_sltn)
+        coe = convert.coe_meeMl0(T, meeMl0)
+        meeMl02 = convert.mod_angles(convert.meeMl0_coe(T, coe))
+        diff = convert.mod_angles(np.abs(meeMl0-meeMl02))
+        indices_2pi = np.where(2*np.pi-tol < diff)
+        diff[indices_2pi] -= 2*np.pi
+
+        np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
+
+    def test_coe_meeMl0_coe(self):
+        T = np.linspace(0, 10, num=m)
+        coe = coe_0
+        meeMl0 = convert.meeMl0_coe(T, coe)
+        coe2 = convert.mod_angles(convert.coe_meeMl0(T, meeMl0))
+        diff = convert.mod_angles(np.abs(coe-coe2))
+        indices_2pi = np.where(2*np.pi-tol < diff)
+        diff[indices_2pi] -= 2*np.pi
+
+        np.testing.assert_allclose(diff, 0., rtol=0, atol=tol)
+
+    def test_meeMl0_rv_meeMl0(self):
+        T = np.linspace(0, 10, num=m)
+        meeMl0 = convert.meeMl0_coe(T, coe_sltn)
+        rv = convert.rv_meeMl0(T, meeMl0)
+        meeMl02 = convert.mod_angles(convert.meeMl0_rv(T, rv))
+        diff = convert.mod_angles(np.abs(meeMl0-meeMl02))
+        indices_2pi = np.where(2*np.pi-tol < diff)
+        diff[indices_2pi] -= 2*np.pi
+
+        np.testing.assert_allclose(diff, 0., rtol=0, atol=tol*10)
+
+    def test_rv_meeMl0_rv(self):
+        T = np.linspace(0, 10, num=m)
+        rv = convert.rv_coe(coe_sltn)
+        meeMl0 = convert.meeMl0_rv(T, rv)
+        rv2 = convert.mod_angles(convert.rv_meeMl0(T, meeMl0))
+        diff = convert.mod_angles(np.abs(rv-rv2))
         indices_2pi = np.where(2*np.pi-tol < diff)
         diff[indices_2pi] -= 2*np.pi
 

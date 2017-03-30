@@ -1,5 +1,5 @@
-from orbital_elements.convert.meeEl_meefl import meeEl_meefl
-from orbital_elements.convert.meeMl_meeEl import meeMl_meeEl
+from .meeEl_meefl import meeEl_meefl
+from .meeMl_meeEl import meeMl_meeEl
 
 __author__ = "Nathan I. Budd"
 __email__ = "nibudd@gmail.com"

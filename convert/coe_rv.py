@@ -1,5 +1,5 @@
-from orbital_elements.convert.mee_rv import mee_rv
-from orbital_elements.convert.coe_mee import coe_mee
+from .mee_rv import mee_rv
+from .coe_mee import coe_mee
 
 __author__ = "Nathan I. Budd"
 __email__ = "nibudd@gmail.com"
