@@ -51,7 +51,7 @@ def meeEl_meeMl(meeMl, tol=1e-14):
         iter_num += 1
         if iter_num > max_iterations:
             print(
-                'max ({}) iterations reached in meeEl+meeMl. Error: {}'.format(
+                'max ({}) iterations reached in meeEl_meeMl. Error: {}'.format(
                     max_iterations, np.max(np.absolute(El1 - El0))))
             break
 
