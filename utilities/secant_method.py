@@ -15,9 +15,9 @@ def secant_method(f, x0, x1, tol=1e-14, Nmax=50):
     Args:
         f: callable
             Takes a float as input and returns a float.
-        x0: ndarray
+        x0: float
             First guess for f(x) = 0.
-        x1: ndarray
+        x1: float
             Second guess for f(x) = 0.
         tol: float
             Error allowed between successive values of f(x).
@@ -63,4 +63,4 @@ def secant_method(f, x0, x1, tol=1e-14, Nmax=50):
 
     if below_Nmax is False:
         print('Reached maximum iterations (50)')
-    return (np.array(X).T, np.array(e).T)
+    return (np.array(X), np.array(e))

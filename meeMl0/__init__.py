@@ -5,3 +5,8 @@ from .zonal_gravity import ZonalGravity
 from .gve import GVE
 from .constant_thrust import ConstantThrust
 from .lyapunov import Lyapunov
+from .least_squares_control import LeastSquaresControl
+from .time_thrust import TimeThrust
+from .error_direction_lsq import ErrorDirectionLSQ
+from .gvessm import GVESSM
+from .gvefpsm import GVEFPSM

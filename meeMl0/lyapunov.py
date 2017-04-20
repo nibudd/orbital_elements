@@ -28,7 +28,7 @@ class Lyapunov(object):
             value in canonical units.
         E: ndarray
             (m, 6) array of state errors.
-        u = ndarray
+        u: ndarray
             (m, 3) array of control accelerations in the LVLH frame.
         V: ndarray
             (m, 1) array of Lyapunov function values.
@@ -80,7 +80,7 @@ class Lyapunov(object):
                 (m, 6) array of state derivatives.
         """
         m = T.shape[0]
-        G = GVE()(T, X)
+        G = GVE(mu=self.mu)(T, X)
 
         # state errors
         Y = self.Y_func(T)

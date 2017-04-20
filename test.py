@@ -783,6 +783,20 @@ class TestMEEMl0(unittest.TestCase):
             convert.rv_mee(convert.mee_meeMl0(T, X_meeMl0)),
             rtol=0, atol=tol*10)
 
+    def test_dgve_dlmnts_dpdot_dp(self):
+        X0_meeMl0 = meeMl0_0
+        T0 = T[0:1]
+        a_d = np.array([[0, 1, 0]])
+        dG_dX = meeMl0.dGVE_dLMNTS(h=1e-7)(T0, X0_meeMl0, a_d)
+        p = mee_0[0, 0]
+        f = mee_0[0, 1]
+        g = mee_0[0, 2]
+        L = mee_0[0, 5]
+        dpdot_dp = (3 * p**.5 / mu**.5 / (1 + f*np.cos(L) + g*np.sin(L)) *
+                    a_d[0, 1])
+        np.testing.assert_allclose(dG_dX[0, 0, 0], dpdot_dp,
+                                   rtol=0, atol=1e-5)
+
 
 class TestPose(unittest.TestCase):
 
@@ -1126,3 +1140,16 @@ class TestUtilities(unittest.TestCase):
         x0 = X[-1]
 
         np.testing.assert_allclose(x0, 0, rtol=0, atol=tol)
+
+    def test_function_tweak(self):
+        def u(T, p):
+            return T @ p
+
+        tweaker = utl.FunctionTweak(u, 0.1)
+        tweaked_u = tweaker(np.array([[1, 1, 1]]))
+        answer = np.array([[0, 0.0, 0],
+                           [1, 1.1, 1],
+                           [2, 2.2, 2],
+                           [3, 3.3, 3]])
+        T = np.array([[0, 1, 2, 3]]).T
+        np.testing.assert_allclose(tweaked_u[2](T), answer, rtol=0, atol=tol)

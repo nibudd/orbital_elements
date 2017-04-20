@@ -1,5 +1,3 @@
-import numpy as np
-
 __author__ = "Nathan I. Budd"
 __email__ = "nibudd@gmail.com"
 __copyright__ = "Copyright 2017, LASR Lab"

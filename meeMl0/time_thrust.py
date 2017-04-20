@@ -7,11 +7,11 @@ __copyright__ = "Copyright 2017, LASR Lab"
 __license__ = "MIT"
 __version__ = "0.1"
 __status__ = "Production"
-__date__ = "19 Mar 2017"
+__date__ = "18 Apr 2017"
 
 
-class ConstantThrust(object):
-    """Constant LVLH acceleration as constant MEE time derivatives.
+class TimeThrust(object):
+    """Time-dependent LVLH acceleration as constant MEE time derivatives.
 
     Attributes:
         vector: ndarray
@@ -50,7 +50,7 @@ class ConstantThrust(object):
                 (m, 6) array of state derivatives.
         """
         m = T.shape[0]
-        u = np.tile(self.vector, (m, 1, 1))
+        u = self.vector(T).reshape((m, 3, 1))
         G = GVE(mu=self.mu)(T, X)
         self.u = u.reshape((m, 3))
 
