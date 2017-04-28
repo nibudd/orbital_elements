@@ -41,7 +41,7 @@ def meeEl_meeMl(meeMl, tol=1e-14):
     Ml = meeMl[:, 5:6]
     El0 = Ml + np.sign(np.sin(Ml))*(f**2 + g**2)**0.5
     El1 = El0 + 1.
-    max_iterations = 30
+    max_iterations = 15
     iter_num = 0
 
     while np.max(np.absolute(El1 - El0)) > tol:

@@ -40,10 +40,13 @@ class FunctionTweak():
             F : list
                 List of callables. The first is the untweaked callable. The
                 rest are the tweaked callables, tweaked in the order that they
-                are listed in p, and used in self.f.
+                are listed in p, and used in self.f. The callables take an
+                (m, 1) time array and an unused X parameter as input, which
+                allows it to be used by integrators. The callable returns a
+                trajectory just as the original f callable does.
         """
         def make_tweaked_f(p):
-            def tweaked_f(T):
+            def tweaked_f(T, X=[]):
                 return self.f(T, p)
 
             return tweaked_f

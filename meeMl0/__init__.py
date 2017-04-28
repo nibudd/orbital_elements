@@ -10,3 +10,4 @@ from .time_thrust import TimeThrust
 from .error_direction_lsq import ErrorDirectionLSQ
 from .gvessm import GVESSM
 from .gvefpsm import GVEFPSM
+from .lyapunov_tracking import LyapunovTracking

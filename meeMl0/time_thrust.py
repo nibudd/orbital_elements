@@ -14,9 +14,9 @@ class TimeThrust(object):
     """Time-dependent LVLH acceleration as constant MEE time derivatives.
 
     Attributes:
-        vector: ndarray
-            3-element array representing the LVLH acceleration in the radial,
-            theta, and normal directions.
+        vector: callable
+            Outputs a (m, 3) array representing the LVLH acceleration in the
+            radial, theta, and normal directions. Has (m, 1) time array input.
         mu: float, optional
             Standard Gravitational Parameter. Defaults to 1.0, the standard
             value in canonical units.
