@@ -21,20 +21,23 @@ class FunctionTweak():
             Callable object that takes inputs (T, p), where T is some
             independent variable and p is an ndarray of parameters, and returns
             a trajectory.
-        tweak: float
+        h: float
             Amount by which each parameter will be tweaked.
     """
 
-    def __init__(self, f, tweak):
+    def __init__(self, f, h):
         self.f = f
-        self.tweak = tweak
+        self.h = h
 
-    def __call__(self, p):
+    def __call__(self, p, tweak_indicies=None):
         """Generate a set of tweaked callables.
 
         Args:
             p: ndarray
                 (1, n) array of parameters.
+            tweak_indicies: list, optional
+                List of indicies, indicating which parameters should be tweaked
+                in this iteration.
 
         Returns:
             F : list
@@ -51,12 +54,23 @@ class FunctionTweak():
 
             return tweaked_f
 
-        n = p.shape[1]
+        # n = p.shape[1]
 
-        tweak_matrix = np.concatenate(
-            (np.zeros((1, n)),
-             np.identity(n)), axis=0
-        ) * self.tweak
+        # tweak_matrix = np.concatenate(
+        #     (np.zeros((1, n)),
+        #      np.identity(n)), axis=0
+        # ) * self.tweak
 
-        tweaked_p = np.tile(p, (n+1, 1)) + tweak_matrix
-        return [make_tweaked_f(p_i.reshape((1, n))) for p_i in tweaked_p]
+        F = [make_tweaked_f(p)]
+        if tweak_indicies is None:
+            tweak_indicies = range(p.shape[1])
+            for idx in tweak_indicies:
+                p_tweaked = np.array(p)
+                p_tweaked[0, idx] = p_tweaked[0, idx] + self.h
+                F += [make_tweaked_f(p_tweaked)]
+
+        return F
+
+
+        # tweaked_p = np.tile(p, (n+1, 1)) + tweak_matrix
+        #return [make_tweaked_f(p_i.reshape((1, n))) for p_i in tweaked_p]
