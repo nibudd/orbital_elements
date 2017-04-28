@@ -7,7 +7,7 @@ __copyright__ = "Copyright 2017, LASR Lab"
 __license__ = "MIT"
 __version__ = "0.1"
 __status__ = "Production"
-__date__ = "27 Mar 2017"
+__date__ = "20 Apr 2017"
 
 
 class Hamiltonian(object):
