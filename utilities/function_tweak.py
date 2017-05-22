@@ -37,7 +37,8 @@ class FunctionTweak():
                 (1, n) array of parameters.
             tweak_indicies: list, optional
                 List of indicies, indicating which parameters should be tweaked
-                in this iteration.
+                in this iteration. If not provided, all parameters will be
+                tweaked.
 
         Returns:
             F : list
@@ -54,23 +55,23 @@ class FunctionTweak():
 
             return tweaked_f
 
-        # n = p.shape[1]
+        # CODE FROM AFTER tweak_indicies WAS ADDED.
+        # F = [make_tweaked_f(p)]
+        # if tweak_indicies is None:
+        #     tweak_indicies = range(p.shape[1])
+        #     for idx in tweak_indicies:
+        #         p_tweaked = np.array(p)
+        #         p_tweaked[0, idx] = p_tweaked[0, idx] + self.h
+        #         F += [make_tweaked_f(p_tweaked)]
 
-        # tweak_matrix = np.concatenate(
-        #     (np.zeros((1, n)),
-        #      np.identity(n)), axis=0
-        # ) * self.tweak
+        # return F
 
-        F = [make_tweaked_f(p)]
-        if tweak_indicies is None:
-            tweak_indicies = range(p.shape[1])
-            for idx in tweak_indicies:
-                p_tweaked = np.array(p)
-                p_tweaked[0, idx] = p_tweaked[0, idx] + self.h
-                F += [make_tweaked_f(p_tweaked)]
+        n = p.shape[1]
 
-        return F
+        tweak_matrix = np.concatenate(
+            (np.zeros((1, n)),
+             np.identity(n)), axis=0
+            ) * self.h
 
-
-        # tweaked_p = np.tile(p, (n+1, 1)) + tweak_matrix
-        #return [make_tweaked_f(p_i.reshape((1, n))) for p_i in tweaked_p]
+        tweaked_p = np.tile(p, (n+1, 1)) + tweak_matrix
+        return [make_tweaked_f(p_i.reshape((1, n))) for p_i in tweaked_p]

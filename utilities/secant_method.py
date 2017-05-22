@@ -19,9 +19,9 @@ def secant_method(f, x0, x1, tol=1e-14, Nmax=50):
             First guess for f(x) = 0.
         x1: float
             Second guess for f(x) = 0.
-        tol: float
+        tol: float, optional
             Error allowed between successive values of f(x).
-        Nmax: int
+        Nmax: int, optional
             Total number of allowed iterations.
 
     Returns:

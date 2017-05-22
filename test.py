@@ -1153,3 +1153,25 @@ class TestUtilities(unittest.TestCase):
                            [3, 3.3, 3]])
         T = np.array([[0, 1, 2, 3]]).T
         np.testing.assert_allclose(tweaked_u[2](T), answer, rtol=0, atol=tol)
+
+    def test_newtons_method_scalar(self):
+        f = np.sin
+        J = np.cos
+        x_guess = 0.1
+        x_root = utl.newtons_method(f, x_guess, J=J)
+        self.assertAlmostEqual(0.0, x_root, 14)
+
+    def test_newtons_method_vector(self):
+        def f(x):
+            y = x.flatten()
+            return np.array([[np.sin(y[0]), np.cos(y[1])]]).T
+
+        def J(x):
+            y = x.flatten()
+            return np.array([[np.cos(y[0]), 0],
+                             [0, -np.sin(y[1])]])
+
+        x_guess = np.array([[0.1, 1.4]]).T
+        x_root = utl.newtons_method(f, x_guess, J=J)
+        answer = np.array([[0, np.pi/2]]).T
+        np.testing.assert_allclose(answer, x_root, rtol=tol, atol=tol)
