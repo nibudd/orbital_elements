@@ -14,53 +14,52 @@ def secant_method(f, x0, x1, tol=1e-14, Nmax=50):
 
     Args:
         f: callable
-            Takes a float as input and returns a float.
+            The objective function, f(x). Takes (n,) ndarrays as input and
+            returns (m,) arrays as output.
         x0: float
-            First guess for f(x) = 0.
+            (n,) array of first root guess.
         x1: float
-            Second guess for f(x) = 0.
+            (n,) array of second root guess.
         tol: float, optional
-            Error allowed between successive values of f(x).
+            Allowable error in the zero value.
         Nmax: int, optional
-            Total number of allowed iterations.
+            Maximum number of allowed iterations.
 
     Returns:
         X: ndarray
-            (m, 1) array of all the root guesses found.
-        e: ndarray
-            (m, 1) array of errors for each root guess found
-
+            (m, 1) array of all the root estimates found.
+        E: ndarray
+            (m, 1) array of errors for each root estimate found
+        N: int
+            Final iteration number.
 
     """
 
     above_tol = True
     below_Nmax = True
-    X = []
-    e = []
+    X = [x0, x1]
+    E = [f(x0), f(x1)]
 
     while above_tol and below_Nmax:
         print('Starting iteration {}'.format(len(X)))
-        f0 = f(x0)
-        f1 = f(x1)
+        f0, f1 = E[-2], E[-1]
+        x0, x1 = X[-2], X[-1]
 
-        X += [x1]
-        e += [np.abs(f1 - f0)]
+        try:
+            X += [x1 - f1 * (x1 - x0) / (f1 - f0)]
+        except ZeroDivisionError:
+            X += [x1]
 
-        if e[-1] != 0:
-            x2 = x1 - f1 * (x1 - x0) / (f1 - f0)
-        else:
-            x2 = x1
+        E += [f(X[-1])]
 
-        (x0, x1) = (x1, x2)
-
-        above_tol = True if e[-1] > tol else False
+        above_tol = True if np.all(np.abs(E[-1]) > tol) else False
         below_Nmax = True if len(X) < Nmax else False
 
         print('Iteration {}: (guess, error) = ({}, {})'.format(len(X)-1,
                                                                X[-1],
-                                                               e[-1]))
+                                                               E[-1]))
         print('**********************')
 
     if below_Nmax is False:
         print('Reached maximum iterations (50)')
-    return (np.array(X), np.array(e))
+    return (np.array(X), np.array(E), len(X)-1)

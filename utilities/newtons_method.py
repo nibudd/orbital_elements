@@ -41,7 +41,7 @@ def newtons_method(f, x_guess, J, tol=1e-14, Nmax=30):
     while np.max(np.absolute(E[-1])) > tol and N <= Nmax:
         x0, f0, J0 = X[-1], E[-1], J1
         try:
-            X += [x0 - (np.linalg.pinv(J0) @ f0).flatten()]
+            X += [x0 - (np.linalg.pinv(J0) @ np.atleast_2d(f0).T).flatten()]
         except np.linalg.LinAlgError:
             X += [x0 - f0 / J0]
         E += [f(X[-1])]
