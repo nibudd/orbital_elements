@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.integrate import ode
 
 
 __author__ = "Nathan I. Budd"
@@ -27,19 +26,27 @@ def newtons_method(f, x_guess, J, tol=1e-14, Nmax=30):
         Nmax: int, optional
             Maximum allowed number of iterations.
     returns:
-        x: ndarray
-            The roots of f. An (n,) ndarray.
-    """
-    x1 = x_guess
-    f1, J1 = f(x1), J(x1)
-    iters = 0
-    while np.max(np.absolute(f1)) > tol and iters <= Nmax:
-        x0, f0, J0 = x1, f1, J1
-        try:
-            x1 = x0 - np.linalg.pinv(J0) @ f0
-        except np.linalg.LinAlgError:
-            x1 = x0 - f0 / J0
-        f1, J1 = f(x1), J(x1)
-        iters += 1
+        X: ndarray
+            (N, n) array of all root estimates found.
+        E: ndarray
+            (N, m) array of all function evaluations.
+        N: int
+            Final iteration number.
 
-    return x1
+    """
+    X = [x_guess]
+    E = [f(X[0])]
+    J1 = J(X[0])
+    N = 0
+    while np.max(np.absolute(E[-1])) > tol and N <= Nmax:
+        x0, f0, J0 = X[-1], E[-1], J1
+        try:
+            X += [x0 - (np.linalg.pinv(J0) @ f0).flatten()]
+        except np.linalg.LinAlgError:
+            X += [x0 - f0 / J0]
+        E += [f(X[-1])]
+        J1 = J(X[-1])
+        N += 1
+        print("Iteration {}. (root, error) = ({}, {})".format(N, X[-1], E[-1]))
+
+    return (np.array(X), np.array(E), N)
