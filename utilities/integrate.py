@@ -28,6 +28,9 @@ def integrate(f, X0, T, *args, atol=1e-13, rtol=1e-13, **kwargs):
             Relative tolerance for the integrator.
         kwargs: dict
             Additional keyword arguments for the integrator.
+    returns:
+        X: ndarray
+            (m, n) array of the state X at each time step in T.
         """
     solver = ode(f).set_integrator("dopri5", atol=atol, rtol=rtol, **kwargs)
     solver.set_initial_value(X0, T[0]).set_f_params(*args)

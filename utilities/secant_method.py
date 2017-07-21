@@ -9,7 +9,7 @@ __status__ = "Production"
 __date__ = "16 Mar 2017"
 
 
-def secant_method(f, x0, x1, tol=1e-14, Nmax=50):
+def secant_method(f, x0, x1, tol=1e-14, Nmax=50, output=True):
     """Uses approximation of Newton's method to estimate root of f.
 
     Args:
@@ -24,6 +24,8 @@ def secant_method(f, x0, x1, tol=1e-14, Nmax=50):
             Allowable error in the zero value.
         Nmax: int, optional
             Maximum number of allowed iterations.
+        output: bool, optional
+            Iteration data will be printed to screen when True.
 
     Returns:
         X: ndarray
@@ -39,9 +41,13 @@ def secant_method(f, x0, x1, tol=1e-14, Nmax=50):
     below_Nmax = True
     X = [x0, x1]
     E = [f(x0), f(x1)]
+    N = 1
+
+    if output:
+        print("Iteration {}. (root, error) = ({}, {})".format(0, X[-2], E[-2]))
+        print("Iteration {}. (root, error) = ({}, {})".format(1, X[-1], E[-1]))
 
     while above_tol and below_Nmax:
-        print('Starting iteration {}'.format(len(X)))
         f0, f1 = E[-2], E[-1]
         x0, x1 = X[-2], X[-1]
 
@@ -51,15 +57,13 @@ def secant_method(f, x0, x1, tol=1e-14, Nmax=50):
             X += [x1]
 
         E += [f(X[-1])]
+        N += 1
 
         above_tol = True if np.all(np.abs(E[-1]) > tol) else False
         below_Nmax = True if len(X) < Nmax else False
 
-        print('Iteration {}: (guess, error) = ({}, {})'.format(len(X)-1,
-                                                               X[-1],
-                                                               E[-1]))
-        print('**********************')
+        if output:
+            print('Iteration {}: (root, error) = ({}, {})'.format(N, X[-1],
+                                                                  E[-1]))
 
-    if below_Nmax is False:
-        print('Reached maximum iterations (50)')
     return (np.array(X), np.array(E), len(X)-1)

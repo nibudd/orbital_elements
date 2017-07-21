@@ -8,7 +8,7 @@ __license__ = "MIT"
 __date__ = "19 May 2017"
 
 
-def newtons_method(f, x_guess, J, tol=1e-14, Nmax=30):
+def newtons_method(f, x_guess, J, tol=1e-14, Nmax=30, output=True):
     """Multidimensional Newton's method root solver.
 
     args:
@@ -25,6 +25,8 @@ def newtons_method(f, x_guess, J, tol=1e-14, Nmax=30):
             Allowable error in the zero value.
         Nmax: int, optional
             Maximum allowed number of iterations.
+        output: bool, optional
+            Iteration data will be printed to screen when True.
     returns:
         X: ndarray
             (N, n) array of all root estimates found.
@@ -32,12 +34,14 @@ def newtons_method(f, x_guess, J, tol=1e-14, Nmax=30):
             (N, m) array of all function evaluations.
         N: int
             Final iteration number.
-
     """
     X = [x_guess]
     E = [f(X[0])]
     J1 = J(X[0])
     N = 0
+    if output:
+        print("Iteration {}. (root, error) = ({}, {})".format(N, X[-1], E[-1]))
+
     while np.max(np.absolute(E[-1])) > tol and N <= Nmax:
         x0, f0, J0 = X[-1], E[-1], J1
         try:
@@ -47,6 +51,8 @@ def newtons_method(f, x_guess, J, tol=1e-14, Nmax=30):
         E += [f(X[-1])]
         J1 = J(X[-1])
         N += 1
-        print("Iteration {}. (root, error) = ({}, {})".format(N, X[-1], E[-1]))
+        if output:
+            print("Iteration {}. (root, error) = ({}, {})".format(N, X[-1],
+                                                                  E[-1]))
 
     return (np.array(X), np.array(E), N)

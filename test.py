@@ -1135,11 +1135,41 @@ class TestUtilities(unittest.TestCase):
 
         self.assertEqual(y, 20)
 
-    def test_secant_method(self):
-        (X, e) = utl.secant_method(np.sin, np.pi/3, np.pi/4)
+    def test_secant_method_scalar(self):
+        (X, e, n) = utl.secant_method(np.sin, np.pi/3, np.pi/4)
         x0 = X[-1]
 
         np.testing.assert_allclose(x0, 0, rtol=0, atol=tol)
+
+    def test_secant_method_uncoupled(self):
+        def f(x):
+            return np.array([np.sin(x[0]),
+                             np.cos(x[1])])
+
+        x0 = np.array([0.1, 1.4]).T
+        x1 = np.array([0.09, 1.41]).T
+        x_roots, f_vals, N = utl.secant_method(f, x0, x1, tol=1e-16)
+        answer = np.array([0., np.pi/2.]).T
+        np.testing.assert_allclose(answer, x_roots[-1], rtol=tol, atol=tol)
+
+    def test_secant_method_coupled(self):
+        def f(x):
+            x1, x2, x3 = x
+            return np.array([x1*x2-1,
+                             x2*x3-1,
+                             x1*x3-1])
+
+        def J(x):
+            x1, x2, x3 = x
+            return np.array([[x2, x1, 0],
+                             [0, x3, x2],
+                             [x3, 0, x1]])
+
+        x0 = np.array([1.5, 1.5, 1.5]).T
+        x1 = np.array([1.6, 1.6, 1.6]).T
+        x_roots, f_vals, N = utl.secant_method(f, x0, x1)
+        answer = np.array([1, 1, 1]).T
+        np.testing.assert_allclose(answer, x_roots[-1], rtol=tol, atol=tol)
 
     def test_function_tweak(self):
         def u(T, p):
@@ -1158,20 +1188,97 @@ class TestUtilities(unittest.TestCase):
         f = np.sin
         J = np.cos
         x_guess = 0.1
-        x_root = utl.newtons_method(f, x_guess, J=J)
-        self.assertAlmostEqual(0.0, x_root, 14)
+        x_roots, f_vals, N = utl.newtons_method(f, x_guess, J)
+        self.assertAlmostEqual(0.0, x_roots[-1], 14)
 
-    def test_newtons_method_vector(self):
+    def test_newtons_method_uncoupled(self):
         def f(x):
-            y = x.flatten()
-            return np.array([[np.sin(y[0]), np.cos(y[1])]]).T
+            return np.array([np.sin(x[0]), np.cos(x[1])])
 
         def J(x):
-            y = x.flatten()
-            return np.array([[np.cos(y[0]), 0],
-                             [0, -np.sin(y[1])]])
+            return np.array([[np.cos(x[0]), 0],
+                             [0, -np.sin(x[1])]])
 
-        x_guess = np.array([[0.1, 1.4]]).T
-        x_root = utl.newtons_method(f, x_guess, J=J)
-        answer = np.array([[0, np.pi/2]]).T
-        np.testing.assert_allclose(answer, x_root, rtol=tol, atol=tol)
+        x_guess = np.array([0.1, 1.4]).T
+        x_roots, f_vals, N = utl.newtons_method(f, x_guess, J)
+        answer = np.array([0, np.pi/2]).T
+        np.testing.assert_allclose(answer, x_roots[-1], rtol=tol, atol=tol)
+
+    def test_newtons_method_coupled(self):
+        def f(x):
+            x1, x2, x3 = x
+            return np.array([x1*x2-1,
+                             x2*x3-1,
+                             x1*x3-1])
+
+        def J(x):
+            x1, x2, x3 = x
+            return np.array([[x2, x1, 0],
+                             [0, x3, x2],
+                             [x3, 0, x1]])
+
+        x_guess = np.array([1.5, 1.5, 1.5]).T
+        x_roots, f_vals, N = utl.newtons_method(f, x_guess, J)
+        answer = np.array([1, 1, 1]).T
+        np.testing.assert_allclose(answer, x_roots[-1], rtol=tol, atol=tol)
+
+    def test_min_root_simple(self):
+        def f(p):
+            p1, p2 = p
+            return 1 + (p1-1)**2 + (2*p2-1)**2
+
+        def Jac(p):
+            p1, p2 = p
+            return np.array([[2*(p1-1), 4*(2*p2-1)]])
+
+        p0 = np.array([5, 5])
+        tol = .0001
+        delta_f = 10
+        Nmax = 50
+        P, E, N = utl.min_root(p0, f, Jac, delta_f=delta_f, tol_f=tol,
+                               Nmax=Nmax)
+        np.testing.assert_allclose([1], E[-1], rtol=0, atol=tol)
+
+    def test_min_root_simple_constrained(self):
+        def f(p):
+            p1, p2 = p
+            return np.atleast_1d(1 + (p1-1)**2 + (2*p2-1)**2)
+
+        def Jac(p):
+            p1, p2 = p
+            return np.array([[2*(p1-1), 4*(2*p2-1)]])
+
+        def psi(p):
+            p1, p2 = p
+            return np.atleast_1d(p1)
+
+        def psi_Jac(p):
+            p1, p2 = p
+            return np.array([[1, 0]])
+
+        p0 = np.array([0, 10])
+        tol = .0001
+        delta_f = 10
+        Nmax = 100
+        P, E, N = utl.min_root(p0, f, Jac, delta_f=delta_f, tol_f=tol,
+                               Nmax=Nmax, psi=psi, psi_Jac=psi_Jac)
+
+    def test_finite_difference(self):
+        def f(t, p):
+            p1, p2, p3 = p[0]
+            return np.array([t*p1,
+                             t*(p1**2 + p2),
+                             t*(p1**3 + p2**2 + p3)])
+
+        def Jac(t, p):
+            p1, p2, p3 = p
+            return np.array([[t, 0, 0],
+                             [2*p1*t, t, 0],
+                             [3*p1**2*t, 2*p2*t, t]])
+
+        t = 1
+        p = np.array([1, 2, 3])
+        h = 1e-10
+        finite_jac = utl.finite_difference(f, p, h)
+        np.testing.assert_allclose(Jac(t, p), finite_jac(t), rtol=0,
+                                   atol=h*1e4)

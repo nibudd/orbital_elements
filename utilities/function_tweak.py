@@ -35,7 +35,7 @@ class FunctionTweak():
         Args:
             p: ndarray
                 (1, n) array of parameters.
-            tweak_indicies: list, optional
+            tweak_indicies: list, optional, deprecated
                 List of indicies, indicating which parameters should be tweaked
                 in this iteration. If not provided, all parameters will be
                 tweaked.
